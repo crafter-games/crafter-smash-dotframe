@@ -30,7 +30,8 @@ if (room === "") {
   }
 }
 const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const relay = params.get("relay") ?? (discord ? `wss://${location.host}/relay` : local ? "ws://localhost:8787" : "");
+// The production relay runs at smash.crafter.run/relay; Discord reaches it through its /relay URL mapping.
+const relay = params.get("relay") ?? (discord ? `wss://${location.host}/relay` : local ? "ws://localhost:8787" : "wss://smash.crafter.run/relay");
 const netplay = relay === "" ? null : { connect: () => connectOnline(relay, room), createRollback };
 try {
   await run(

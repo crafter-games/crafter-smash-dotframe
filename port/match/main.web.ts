@@ -2,12 +2,13 @@ import { loadBytes, run } from "../../../dotframe/src/web/run";
 import { isDiscordActivity, showMessage, startDiscord } from "./discord";
 import { createSetup, windowOptions } from "./game";
 
-// ?chars=railly,shiara&stage=lima&human=1&level=7&stocks=3
+// Menus by default. ?chars=railly,shiara&stage=lima&human=1&level=7&stocks=3 jumps straight into a match.
 const params = new URLSearchParams(location.search);
 const chars = (params.get("chars") ?? "railly,anthony").split(",");
 const discord = isDiscordActivity();
 // In Discord the player always fights the CPU until there is netcode.
-const human = discord || params.get("human") === "1";
+const direct = params.has("chars") || params.has("stage");
+const human = discord || !direct || params.get("human") === "1";
 if (discord) {
   try {
     await startDiscord();
@@ -22,14 +23,14 @@ try {
   createSetup(loadBytes, {
     root: ".",
     dotframe: "dotframe",
-    config: {
+    config: direct ? {
       stage: params.get("stage") ?? "station",
       chars: [chars[0], chars.length > 1 ? chars[1] : chars[0]],
       mode: "vs",
       stocks: Number(params.get("stocks") ?? "3"),
       cpu: [!human, true],
       cpuLevel: Number(params.get("level") ?? "7"),
-    },
+    } : null,
     humanP1: human,
   }),
   );

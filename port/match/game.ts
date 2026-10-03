@@ -10,6 +10,7 @@ import { ITEM_NAMES } from "../src/items";
 import { loadAtlas, loadItem, loadSound, loadTrack } from "../src/loaders";
 import { SFX_NAMES } from "../src/sfx-names";
 import { initSound } from "../src/sound";
+import { createMenu } from "../src/menu";
 import { loadSpriteData } from "../src/sprites";
 
 export const windowOptions = { width: 1280, height: 720, title: "Crafter Smash" };
@@ -20,7 +21,8 @@ export interface MatchOptions {
   // Paths relative to the crafter-smash repo root and to dotframe's assets.
   root: string;
   dotframe: string;
-  config: GameConfig;
+  // Skips the menus and starts this match directly (smoke tests, Discord 1P vs CPU).
+  config: GameConfig | null;
   humanP1: boolean;
 }
 
@@ -62,16 +64,18 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
       }
       for (const name of ITEM_NAMES) track(load(`${root}/assets/items/${name}.png`).then((png: Uint8Array): Promise<void> => loadItem(gpu, name, png)));
       for (const name of SFX_NAMES) track(load(`${root}/port/assets/sfx/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadSound(audio, name, mp3)));
-      const music = ["battlefield", "final_destination", "big_blue"];
+      const music = ["battlefield", "final_destination", "big_blue", "menu"];
+      for (const id of CHAR_IDS) music.push(`victory_${id}`);
       for (const name of music) track(load(`${root}/assets/music/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadTrack(audio, name, mp3)));
       for (const task of tasks) await task;
       ready = true;
-      game.start(options.config);
+      if (options.config) game.start(options.config);
     };
     loadAll().catch((error: unknown): void => {
       console.error(`asset loading failed: ${error instanceof Error ? error.message : "unknown error"}`);
     });
 
+    const menu = createMenu({ game, input, width: W, height: H, modes: ["cpu", "2p", "training"], touch: null });
     let simulated = 0;
     let started = -1;
     return (time: number): boolean => {
@@ -94,12 +98,14 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
       // Fixed 60 Hz simulation, at most 5 steps per frame (as the original loop).
       let steps = 0;
       while (simulated + STEP <= time && steps < 5) {
-        game.step();
+        if (options.config) game.step();
+        else menu.step();
         simulated += STEP;
         steps += 1;
       }
       if (steps === 5) simulated = time;
-      game.render(ctx);
+      if (options.config) game.render(ctx);
+      else menu.render(ctx);
       ctx.end({ r: 0, g: 0, b: 0 });
       return true;
     };

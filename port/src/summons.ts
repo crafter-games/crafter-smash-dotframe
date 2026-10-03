@@ -1,5 +1,5 @@
 // Summons and thrown items shared by special moves: Pokémon, Miku and Kirby. Ported from js/characters.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import type { Fighter } from "./fighter";
 import type { Game, Projectile } from "./game";
 import { drawItem } from "./items";

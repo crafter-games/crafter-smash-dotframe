@@ -1,5 +1,5 @@
 // Fighter: state machine and Melee-style physics, ported from js/fighter.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import { getCharacter } from "./characters";
 import type { Game } from "./game";
 import { type Controller, emptyFrameInput, emptyInput, type FrameInput, type RawInput, TAP_JUMP } from "./input";

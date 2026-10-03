@@ -1,5 +1,5 @@
 // Human controller over dotframe input: remappable keyboard plus the standard-layout gamepad per port.
-import { GamepadAxis, GamepadButton, type Input, keyCodes } from "../../../dotframe/src/input";
+import { GamepadAxis, GamepadButton, type Input, keyCodes } from "../../vendor/dotframe/src/input";
 import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import { type Controller, emptyInput, type RawInput, TAP_JUMP } from "./input";

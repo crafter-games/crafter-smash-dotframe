@@ -1,5 +1,5 @@
 // Character and move data shapes, derived from the values in js/characters.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import type { PoseOverride } from "./pose";

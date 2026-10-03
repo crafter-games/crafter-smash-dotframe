@@ -1,7 +1,7 @@
 // Pixel-art stages in the style of Super Smash Flash, ported from js/stages.js.
 // Bakes run once on the CPU with Raster2D and upload as textures; drawing goes through draw2d.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { RenderGpu, Texture } from "../../../dotframe/src/gpu";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
+import type { RenderGpu, Texture } from "../../vendor/dotframe/src/gpu";
 import {
   addColorStop,
   createLinearGradient,
@@ -9,7 +9,7 @@ import {
   createRaster2D,
   type Raster,
   type Raster2D,
-} from "../../../dotframe/src/raster2d";
+} from "../../vendor/dotframe/src/raster2d";
 import { clamp, seeded, shade, TAU } from "./util";
 
 export const PX = 2; // stage pixel scale

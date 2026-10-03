@@ -1,7 +1,7 @@
-import { loadBytes, run } from "../../../dotframe/src/native/run";
+import { loadBytes, run } from "../../vendor/dotframe/src/native/run";
 import { createSetup, windowOptions } from "./game";
 
-const dotframe = process.env.DOTFRAME ?? "../dotframe";
+const dotframe = process.env.DOTFRAME ?? "vendor/dotframe";
 await run(
   windowOptions,
   createSetup(

@@ -1,7 +1,7 @@
 // Menus drawn in the game canvas (title, character select, pause, results), shared by every platform.
 // The original used DOM screens; drawing them with draw2d makes them work on native, iOS and Discord.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
-import { GamepadAxis, GamepadButton, type Input, keyCodes, MouseButton, type Touch } from "../../../dotframe/src/input";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
+import { GamepadAxis, GamepadButton, type Input, keyCodes, MouseButton, type Touch } from "../../vendor/dotframe/src/input";
 import { CHAR_IDS, getCharacter } from "./characters";
 import { DEFAULT_KEYMAPS, type Keymap } from "./controllers";
 import type { Fighter } from "./fighter";

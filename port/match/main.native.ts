@@ -1,4 +1,4 @@
-import { loadBytes, run } from "../../../dotframe/src/native/run";
+import { loadBytes, run } from "../../vendor/dotframe/src/native/run";
 import { createSetup, windowOptions } from "./game";
 
 // Menus by default; CHARS or STAGE jump straight into a match.
@@ -9,7 +9,7 @@ await run(
   windowOptions,
   createSetup(loadBytes, {
     root: process.env.SMASH_ROOT ?? ".",
-    dotframe: process.env.DOTFRAME ?? "../dotframe",
+    dotframe: process.env.DOTFRAME ?? "vendor/dotframe",
     config: direct ? {
       stage: process.env.STAGE ?? "station",
       chars: [chars[0], chars.length > 1 ? chars[1] : chars[0]],

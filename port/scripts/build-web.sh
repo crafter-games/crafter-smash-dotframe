@@ -3,7 +3,7 @@
 set -e
 port_dir=$(cd "$(dirname "$0")/.." && pwd)
 repo=$(cd "$port_dir/.." && pwd)
-dotframe=${DOTFRAME:-$(cd "$repo/../dotframe" && pwd)}
+dotframe=${DOTFRAME:-$(cd "$repo/vendor/dotframe" && pwd)}
 out="$port_dir/dist/web"
 rm -rf "$out"
 mkdir -p "$out/assets" "$out/port" "$out/dotframe/assets"

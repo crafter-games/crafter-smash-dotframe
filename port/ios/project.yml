@@ -10,8 +10,8 @@ targets:
     sources:
       - path: host/main.c
       - path: build/smash_glue.c
-      - path: ../../../dotframe/native/df_native.c
-      - path: ../../../dotframe/native/df_audio.c
+      - path: ../../vendor/dotframe/native/df_native.c
+      - path: ../../vendor/dotframe/native/df_audio.c
       - path: ../dist/web
         type: folder
         buildPhase: resources
@@ -23,17 +23,17 @@ targets:
         INFOPLIST_FILE: host/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
         HEADER_SEARCH_PATHS:
-          - $(SRCROOT)/../../../dotframe/vendor/SDL3-3.4.16/include
-          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/include
-          - $(SRCROOT)/../../../dotframe/native
+          - $(SRCROOT)/../../vendor/dotframe/vendor/SDL3-3.4.16/include
+          - $(SRCROOT)/../../vendor/dotframe/vendor/wgpu/ios/include
+          - $(SRCROOT)/../../vendor/dotframe/native
         LIBRARY_SEARCH_PATHS:
           - $(SRCROOT)/build/.scriptc
-          - $(SRCROOT)/../../../dotframe/vendor/build/sdl-ios/Release-iphoneos
-          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/lib
+          - $(SRCROOT)/../../vendor/dotframe/vendor/build/sdl-ios/Release-iphoneos
+          - $(SRCROOT)/../../vendor/dotframe/vendor/wgpu/ios/lib
         OTHER_LDFLAGS:
           - $(SRCROOT)/build/.scriptc/app.lib.a
-          - $(SRCROOT)/../../../dotframe/vendor/build/sdl-ios/Release-iphoneos/libSDL3.a
-          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/lib/libwgpu_native.a
+          - $(SRCROOT)/../../vendor/dotframe/vendor/build/sdl-ios/Release-iphoneos/libSDL3.a
+          - $(SRCROOT)/../../vendor/dotframe/vendor/wgpu/ios/lib/libwgpu_native.a
           - -lc++
           - -liconv
         GCC_WARN_INHIBIT_ALL_WARNINGS: YES

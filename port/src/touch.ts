@@ -1,6 +1,6 @@
 // On-screen controls for phones: a floating joystick on the left half and four buttons on the right.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { Input, Touch } from "../../../dotframe/src/input";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
+import type { Input, Touch } from "../../vendor/dotframe/src/input";
 import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import { type Controller, emptyInput, type RawInput, TAP_JUMP } from "./input";

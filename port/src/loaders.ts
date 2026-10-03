@@ -1,7 +1,7 @@
 // Async asset loaders for the web and desktop entries. Kept apart from the modules they fill so the iOS library
 // build, which cannot reach promises, does not import them.
-import type { Audio } from "../../../dotframe/src/audio";
-import type { Gpu } from "../../../dotframe/src/gpu";
+import type { Audio } from "../../vendor/dotframe/src/audio";
+import type { Gpu } from "../../vendor/dotframe/src/gpu";
 import { itemIsSmooth, setItem } from "./items";
 import { registerSound, registerTrack } from "./sound";
 import { setAtlas } from "./sprites";

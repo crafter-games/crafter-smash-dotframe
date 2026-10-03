@@ -1,7 +1,7 @@
 // Playable milestone: one match with every engine piece of the port (stages, fighters, AI, effects, sound, HUD).
-import { createDraw2D } from "../../../dotframe/src/draw2d";
-import type { Frame, Setup, Texture } from "../../../dotframe/src/gpu";
-import type { Platform } from "../../../dotframe/src/platform";
+import { createDraw2D } from "../../vendor/dotframe/src/draw2d";
+import type { Frame, Setup, Texture } from "../../vendor/dotframe/src/gpu";
+import type { Platform } from "../../vendor/dotframe/src/platform";
 import { createCPUController } from "../src/ai";
 import { CHAR_IDS } from "../src/characters";
 import { createHumanController, DEFAULT_KEYMAPS } from "../src/controllers";

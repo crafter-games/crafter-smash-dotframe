@@ -1,4 +1,4 @@
-import { loadBytes, run } from "../../../dotframe/src/web/run";
+import { loadBytes, run } from "../../vendor/dotframe/src/web/run";
 import { isDiscordActivity, showMessage, startDiscord } from "./discord";
 import { createSetup, windowOptions } from "./game";
 

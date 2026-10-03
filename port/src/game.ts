@@ -1,6 +1,6 @@
 // Game: loop, camera, hits and HUD, ported from js/game.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { RenderGpu } from "../../../dotframe/src/gpu";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
+import type { RenderGpu } from "../../vendor/dotframe/src/gpu";
 import { Effects } from "./effects";
 import { Fighter, KB_SCALE, type Rect, TUMBLE_KB } from "./fighter";
 import type { Controller } from "./input";

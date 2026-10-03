@@ -1,5 +1,5 @@
 // Visual effects, ported from js/effects.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import type { Fighter } from "./fighter";
 import { BASE_POSE, mergePose, type Pose } from "./pose";
 import { drawFighterBody, drawSpriteWorld } from "./sprites";

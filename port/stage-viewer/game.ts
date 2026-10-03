@@ -1,7 +1,7 @@
 // Milestone viewer: bakes every stage and cycles through them with the game's default camera.
-import { createDraw2D } from "../../../dotframe/src/draw2d";
-import type { Frame, Setup, Texture } from "../../../dotframe/src/gpu";
-import type { Platform } from "../../../dotframe/src/platform";
+import { createDraw2D } from "../../vendor/dotframe/src/draw2d";
+import type { Frame, Setup, Texture } from "../../vendor/dotframe/src/gpu";
+import type { Platform } from "../../vendor/dotframe/src/platform";
 import { drawStageBackground, drawStageForeground, makeStage, STAGES, type Stage } from "../src/stages";
 
 export const windowOptions = { width: 1280, height: 720, title: "Crafter Smash: stages" };

@@ -1,5 +1,5 @@
 // Move callbacks referenced by characters-data.ts, ported from the originals in move-handlers.reference.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import type { Fighter } from "./fighter";
 import type { Game, Projectile } from "./game";
 import { CAT_MEMES, drawCodexTerminal, drawItem, drawMeme, drawOpenAI, drawVercel, itemImage } from "./items";

@@ -1,7 +1,7 @@
 // iOS entry, compiled with scriptc in library mode. The native host calls init once with the app bundle's
 // resource path, then frame every display refresh. Loading is synchronous: library mode has no promises.
-import { createDraw2D, type Draw2D } from "../../../dotframe/src/draw2d";
-import { openLibraryPlatform } from "../../../dotframe/src/native/library";
+import { createDraw2D, type Draw2D } from "../../vendor/dotframe/src/draw2d";
+import { openLibraryPlatform } from "../../vendor/dotframe/src/native/library";
 import { createCPUController } from "../src/ai";
 import { CHAR_IDS } from "../src/characters";
 import { Game } from "../src/game";

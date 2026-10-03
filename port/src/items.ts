@@ -1,6 +1,6 @@
 // Items and summons (Kirbys, Pokémon, Miku, cat memes) and prop drawings, ported from js/items.js.
-import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { Texture } from "../../../dotframe/src/gpu";
+import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
+import type { Texture } from "../../vendor/dotframe/src/gpu";
 import type { Projectile } from "./game";
 import { TAU } from "./util";
 

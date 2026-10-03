@@ -1,5 +1,5 @@
 // Melee sound effects and announcer plus music, ported from js/audio.js onto dotframe's Audio.
-import type { AudioPlayer } from "../../../dotframe/src/audio";
+import type { AudioPlayer } from "../../vendor/dotframe/src/audio";
 import { rand } from "./util";
 
 const MUSIC_VOLUME = 0.45;

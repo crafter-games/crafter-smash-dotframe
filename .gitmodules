@@ -1,0 +1,3 @@
+[submodule "vendor/dotframe"]
+	path = vendor/dotframe
+	url = https://github.com/crafter-games/dotframe.git

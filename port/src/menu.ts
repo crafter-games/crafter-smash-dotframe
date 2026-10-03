@@ -70,7 +70,8 @@ const MODE_LABELS = new Map<string, string>([
   ["online", "EN LÍNEA"],
 ]);
 const INPUT_DELAY = 2;
-const MAX_ROLLBACK = 12;
+// About 330 ms at 60 Hz: past this unconfirmed span a peer waits instead of predicting.
+const MAX_ROLLBACK = 20;
 const PAUSE_BUTTON = 44;
 const INK = "#0d0b1a";
 
@@ -900,7 +901,9 @@ export function createMenu(options: MenuOptions): Menu {
       ctx.setTextAlign("left");
       ctx.setTextBaseline("top");
       ctx.setFillStyle(st.desync >= 0 ? "#ff4d5e" : "rgba(255,255,255,0.6)");
-      ctx.fillText(st.desync >= 0 ? `DESYNC en frame ${st.desync}` : `EN LÍNEA · rollbacks ${st.rollbacks} · máx ${st.longestRollback}f`, 12, 10);
+      const ping = Math.round((st.rtt * 1000) / 60);
+      const line = `EN LÍNEA · ping ${ping} ms · rollbacks ${st.rollbacks} (máx ${st.longestRollback}f) · pausas ${st.stalls} · adelanto ${st.ahead.toFixed(1)}f · tick ${st.tickMs.toFixed(1)} ms`;
+      ctx.fillText(st.desync >= 0 ? `DESYNC en frame ${st.desync}` : line, 12, 10);
     }
     const controls = options.touch;
     if (screen === "fight" && controls) {

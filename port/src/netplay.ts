@@ -33,7 +33,7 @@ export function createRollback(options: RollbackOptions): Rollback {
   let rtt = 0;
   let ahead = 0;
   let sentSums = 0;
-  const stats: RollbackStats = { frame: 0, rollbacks: 0, longestRollback: 0, stalls: 0, desync: -1 };
+  const stats: RollbackStats = { frame: 0, rollbacks: 0, longestRollback: 0, stalls: 0, desync: -1, rtt: 0, ahead: 0, tickMs: 0 };
 
   for (let f = 0; f < inputDelay; f++) {
     local[f] = NEUTRAL_INPUT;
@@ -110,6 +110,15 @@ export function createRollback(options: RollbackOptions): Rollback {
   };
 
   const tick = (localInput: number): boolean => {
+    const started = performance.now();
+    const advanced = step(localInput);
+    stats.tickMs = performance.now() - started;
+    stats.rtt = rtt;
+    stats.ahead = ahead;
+    return advanced;
+  };
+
+  const step = (localInput: number): boolean => {
     settle();
     // Wait rather than predict too far, or run ahead of a slower peer.
     // The peer's last reported frame is one trip old; its current frame is about that plus half the round trip.

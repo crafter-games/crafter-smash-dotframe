@@ -43,6 +43,11 @@ export interface RollbackStats {
   longestRollback: number;
   stalls: number;
   desync: number;
+  // Smoothed round trip and lead over the peer, in frames.
+  rtt: number;
+  ahead: number;
+  // Time spent in the last tick (rollback, re-simulation and the new frame), in ms.
+  tickMs: number;
 }
 
 export interface Rollback {

@@ -1,7 +1,7 @@
 // Pixel-art stages in the style of Super Smash Flash, ported from js/stages.js.
 // Bakes run once on the CPU with Raster2D and upload as textures; drawing goes through draw2d.
 import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { Gpu, Texture } from "../../../dotframe/src/gpu";
+import type { RenderGpu, Texture } from "../../../dotframe/src/gpu";
 import {
   addColorStop,
   createLinearGradient,
@@ -546,7 +546,7 @@ function bakeLima(platforms: PlatformSpec[]): Baked {
 
 const bakes: Map<string, StageArt> = new Map();
 
-function bake(def: StageDef, gpu: Gpu): StageArt {
+function bake(def: StageDef, gpu: RenderGpu): StageArt {
   const cached = bakes.get(def.id);
   if (cached) return cached;
   const baked = def.id === "station" ? bakeTemple(def.platforms) : def.id === "final" ? bakeFinal(def.platforms) : bakeLima(def.platforms);
@@ -556,7 +556,7 @@ function bake(def: StageDef, gpu: Gpu): StageArt {
   return art;
 }
 
-export function makeStage(id: string, gpu: Gpu): Stage {
+export function makeStage(id: string, gpu: RenderGpu): Stage {
   let def = STAGES[0];
   for (const candidate of STAGES) if (candidate.id === id) def = candidate;
   const platforms: Platform[] = [];

@@ -1,6 +1,6 @@
 // Game: loop, camera, hits and HUD, ported from js/game.js.
 import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { Gpu } from "../../../dotframe/src/gpu";
+import type { RenderGpu } from "../../../dotframe/src/gpu";
 import { Effects } from "./effects";
 import { Fighter, KB_SCALE, type Rect, TUMBLE_KB } from "./fighter";
 import type { Controller } from "./input";
@@ -164,7 +164,7 @@ const EMBLEMS = new Map<string, string>([
 ]);
 
 export class Game {
-  gpu: Gpu;
+  gpu: RenderGpu;
   fx = new Effects();
   W: number;
   H: number;
@@ -196,7 +196,7 @@ export class Game {
   onEnd: ((results: Results) => void) | null = null;
   makeController: ControllerFactory;
 
-  constructor(gpu: Gpu, width: number, height: number, makeController: ControllerFactory) {
+  constructor(gpu: RenderGpu, width: number, height: number, makeController: ControllerFactory) {
     this.gpu = gpu;
     this.W = width;
     this.H = height;

@@ -6,10 +6,11 @@ import { createCPUController } from "../src/ai";
 import { CHAR_IDS } from "../src/characters";
 import { createHumanController, DEFAULT_KEYMAPS } from "../src/controllers";
 import { Game, type GameConfig } from "../src/game";
-import { ITEM_NAMES, loadItem } from "../src/items";
+import { ITEM_NAMES } from "../src/items";
+import { loadAtlas, loadItem, loadSound, loadTrack } from "../src/loaders";
 import { SFX_NAMES } from "../src/sfx-names";
-import { initSound, loadSound, loadTrack } from "../src/sound";
-import { loadAtlas, loadSpriteData } from "../src/sprites";
+import { initSound } from "../src/sound";
+import { loadSpriteData } from "../src/sprites";
 
 export const windowOptions = { width: 1280, height: 720, title: "Crafter Smash" };
 
@@ -60,9 +61,9 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
         }
       }
       for (const name of ITEM_NAMES) track(load(`${root}/assets/items/${name}.png`).then((png: Uint8Array): Promise<void> => loadItem(gpu, name, png)));
-      for (const name of SFX_NAMES) track(load(`${root}/port/assets/sfx/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadSound(name, mp3)));
+      for (const name of SFX_NAMES) track(load(`${root}/port/assets/sfx/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadSound(audio, name, mp3)));
       const music = ["battlefield", "final_destination", "big_blue"];
-      for (const name of music) track(load(`${root}/assets/music/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadTrack(name, mp3)));
+      for (const name of music) track(load(`${root}/assets/music/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadTrack(audio, name, mp3)));
       for (const task of tasks) await task;
       ready = true;
       game.start(options.config);

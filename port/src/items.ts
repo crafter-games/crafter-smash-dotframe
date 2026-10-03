@@ -1,6 +1,6 @@
 // Items and summons (Kirbys, Pokémon, Miku, cat memes) and prop drawings, ported from js/items.js.
 import type { Draw2D } from "../../../dotframe/src/draw2d";
-import type { Gpu, Texture } from "../../../dotframe/src/gpu";
+import type { Texture } from "../../../dotframe/src/gpu";
 import type { Projectile } from "./game";
 import { TAU } from "./util";
 
@@ -49,8 +49,11 @@ const MEME_CAPTIONS = new Map<string, string>([
 const images = new Map<string, Texture>();
 
 // Cat memes are photos and draw smoothed; everything else is pixel art.
-export async function loadItem(gpu: Gpu, name: string, png: Uint8Array): Promise<void> {
-  images.set(name, await gpu.createImage(png, name.startsWith("cat_")));
+// Cat memes are photos and should be created with linear filtering; everything else is pixel art.
+export const itemIsSmooth = (name: string): boolean => name.startsWith("cat_");
+
+export function setItem(name: string, texture: Texture): void {
+  images.set(name, texture);
 }
 
 export function itemImage(name: string): Texture | null {

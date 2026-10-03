@@ -1,30 +1,26 @@
 // Melee sound effects and announcer plus music, ported from js/audio.js onto dotframe's Audio.
-import type { Audio } from "../../../dotframe/src/audio";
+import type { AudioPlayer } from "../../../dotframe/src/audio";
 import { rand } from "./util";
 
 const MUSIC_VOLUME = 0.45;
 
-let audio: Audio | null = null;
+let audio: AudioPlayer | null = null;
 const sounds = new Map<string, number>();
 const tracks = new Map<string, number>();
 let musicOn = true;
 let musicName = "";
 
-export function initSound(platformAudio: Audio): void {
+export function initSound(platformAudio: AudioPlayer): void {
   audio = platformAudio;
   platformAudio.setMasterVolume(0.8);
 }
 
-export async function loadSound(name: string, mp3: Uint8Array): Promise<void> {
-  const a = audio;
-  if (!a) return;
-  sounds.set(name, await a.loadSound(mp3));
+export function registerSound(name: string, id: number): void {
+  sounds.set(name, id);
 }
 
-export async function loadTrack(name: string, mp3: Uint8Array): Promise<void> {
-  const a = audio;
-  if (!a) return;
-  tracks.set(name, await a.loadMusic(mp3));
+export function registerTrack(name: string, id: number): void {
+  tracks.set(name, id);
 }
 
 export function play(name: string, volume: number, rate: number): void {

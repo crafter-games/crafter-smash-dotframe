@@ -28,8 +28,9 @@ export function showMessage(text: string): void {
   document.body.appendChild(box);
 }
 
-// Resolves once Discord has acknowledged the Activity; rejects on timeout or a missing client id.
-export async function startDiscord(): Promise<void> {
+// Resolves with the Activity instance id (everyone in the same launch shares it) once Discord has acknowledged
+// the Activity; rejects on timeout or a missing client id.
+export async function startDiscord(): Promise<string> {
   report("webgpu", "gpu" in navigator && navigator.gpu ? "available" : "missing");
   const id = clientId();
   if (id === "") throw new Error("Falta el client id de Discord.");
@@ -47,4 +48,5 @@ export async function startDiscord(): Promise<void> {
   }
   report("handshake", "ready");
   report("platform", sdk.platform);
+  return sdk.instanceId;
 }

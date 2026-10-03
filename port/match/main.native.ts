@@ -19,5 +19,6 @@ await run(
       cpuLevel: Number(process.env.CPU_LEVEL ?? "7"),
     } : null,
     humanP1: human,
+    netplay: null,
   }),
 );

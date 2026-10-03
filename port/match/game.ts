@@ -11,6 +11,7 @@ import { loadAtlas, loadItem, loadSound, loadTrack } from "../src/loaders";
 import { SFX_NAMES } from "../src/sfx-names";
 import { initSound } from "../src/sound";
 import { createMenu } from "../src/menu";
+import type { Netplay } from "../src/net-types";
 import { loadSpriteData } from "../src/sprites";
 
 export const windowOptions = { width: 1280, height: 720, title: "Crafter Smash" };
@@ -24,6 +25,7 @@ export interface MatchOptions {
   // Skips the menus and starts this match directly (smoke tests, Discord 1P vs CPU).
   config: GameConfig | null;
   humanP1: boolean;
+  netplay: Netplay | null;
 }
 
 const STEP = 1 / 60;
@@ -75,7 +77,7 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
       console.error(`asset loading failed: ${error instanceof Error ? error.message : "unknown error"}`);
     });
 
-    const menu = createMenu({ game, input, width: W, height: H, modes: ["cpu", "2p", "training"], touch: null });
+    const menu = createMenu({ game, input, width: W, height: H, modes: ["cpu", "online", "2p", "training"], touch: null, netplay: options.netplay });
     let simulated = 0;
     let started = -1;
     return (time: number): boolean => {

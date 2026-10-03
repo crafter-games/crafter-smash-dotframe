@@ -3,14 +3,17 @@
 import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import { GamepadAxis, GamepadButton, type Input, keyCodes, MouseButton, type Touch } from "../../vendor/dotframe/src/input";
 import { CHAR_IDS, getCharacter } from "./characters";
-import { DEFAULT_KEYMAPS, type Keymap } from "./controllers";
+import { createHumanController, DEFAULT_KEYMAPS, type Keymap } from "./controllers";
 import type { Fighter } from "./fighter";
-import type { Game, GameConfig, Results } from "./game";
+import { Game, type GameConfig, type Results } from "./game";
+import type { Controller, RawInput } from "./input";
+import { decodeInput, encodeInput } from "./netinput";
+import type { Netplay, OnlineLink, Rollback, StartMessage } from "./net-types";
 import { playMusic, sfx, voice } from "./sound";
 import { faces } from "./sprites";
 import { STAGES } from "./stages";
 import type { TouchControls } from "./touch";
-import { clamp, shade } from "./util";
+import { clamp, seedRandom, shade } from "./util";
 
 export interface MenuOptions {
   game: Game;
@@ -21,6 +24,8 @@ export interface MenuOptions {
   modes: string[];
   // Present on touch devices: drawn during fights, with a pause button.
   touch: TouchControls | null;
+  // Relay connection and rollback engine for the "online" mode; null where netplay is unavailable.
+  netplay: Netplay | null;
 }
 
 export interface Menu {
@@ -62,7 +67,10 @@ const MODE_LABELS = new Map<string, string>([
   ["cpu", "1 JUGADOR vs CPU"],
   ["2p", "2 JUGADORES"],
   ["training", "ENTRENAMIENTO"],
+  ["online", "EN LÍNEA"],
 ]);
+const INPUT_DELAY = 2;
+const MAX_ROLLBACK = 8;
 const PAUSE_BUTTON = 44;
 const INK = "#0d0b1a";
 
@@ -100,6 +108,15 @@ export function createMenu(options: MenuOptions): Menu {
   let resultsT = 0;
   let t = 0;
   let greeted = false;
+  // Netplay: its own Game whose controllers read the rollback engine's input slots.
+  let link: OnlineLink | null = null;
+  let rollback: Rollback | null = null;
+  let notice = "";
+  const netSlots = [0, 0];
+  const netGame = new Game(game.gpu, W, H, (port: number): Controller => ({ isCPU: false, read: (): RawInput => decodeInput(netSlots[port]) }));
+  const localController: Controller = options.touch ? options.touch.controller : createHumanController(input, 0, DEFAULT_KEYMAPS[0]);
+  const online = (): boolean => cfg.mode === "online";
+  const host = (): boolean => link !== null && link.slot() === 0;
 
   // ---------- Input: edge-triggered navigation per player, plus taps in logical pixels ----------
   const prevNav: Nav[] = [emptyNav(), emptyNav()];
@@ -188,8 +205,10 @@ export function createMenu(options: MenuOptions): Menu {
   };
   const titleButtons = (): Button[] => {
     const labels: string[] = [];
-    for (const mode of options.modes) labels.push(MODE_LABELS.get(mode) ?? mode);
-    return column(options.modes, labels, 400);
+    const modes: string[] = [];
+    for (const mode of options.modes) if (mode !== "online" || options.netplay) modes.push(mode);
+    for (const mode of modes) labels.push(MODE_LABELS.get(mode) ?? mode);
+    return column(modes, labels, 380);
   };
   const pauseButtons = (): Button[] => column(["resume", "restart", "quit"], ["CONTINUAR", "REINICIAR", "SALIR AL MENÚ"], 300);
   const resultButtons = (): Button[] => {
@@ -223,6 +242,7 @@ export function createMenu(options: MenuOptions): Menu {
   // Option rows under the panels; each row is a list of buttons.
   const optionRows = (): Button[][] => {
     const rows: Button[][] = [];
+    if (online() && !host()) return rows;
     const y = 538;
     const stageRow: Button[] = [];
     const sw = 210;
@@ -234,7 +254,7 @@ export function createMenu(options: MenuOptions): Menu {
     rows.push(stageRow);
     const steppers: string[] = [];
     if (cfg.mode !== "training") steppers.push("stocks");
-    if (cfg.cpu[1] && cfg.mode !== "training") steppers.push("cpuLevel");
+    if (cfg.cpu[1] && cfg.mode !== "training" && !online()) steppers.push("cpuLevel");
     const stepW = 260;
     let sx = W / 2 - (stepW * steppers.length + 24 * (steppers.length - 1)) / 2;
     for (const name of steppers) {
@@ -257,9 +277,47 @@ export function createMenu(options: MenuOptions): Menu {
     screen = next;
     focus = 0;
     optFocus = 0;
-    if (next === "title" || next === "select") playMusic("menu", false);
+    if (next === "title" || next === "select" || next === "online") playMusic("menu", false);
+  };
+  const leaveOnline = (message: string): void => {
+    if (link) link.close();
+    link = null;
+    rollback = null;
+    netGame.stop();
+    notice = message;
+    cfg.mode = "cpu";
+    cfg.cpu = [false, true];
+    show("title");
+  };
+  const enterOnlineSelect = (): void => {
+    cfg.mode = "online";
+    cfg.cpu = [false, false];
+    sel[0].cur = CHAR_IDS.indexOf(cfg.chars[0]);
+    sel[0].chosen = false;
+    sel[1].chosen = false;
+    show("select");
+    voice("choose", 1);
+  };
+  const beginOnline = (start: StartMessage): void => {
+    const l = link;
+    const net = options.netplay;
+    if (!l || !net) return;
+    seedRandom(start.seed);
+    netGame.start({ mode: "vs", chars: [start.chars[0], start.chars[1]], stage: start.stage, stocks: start.stocks, cpuLevel: 5, cpu: [false, false] });
+    netGame.onEnd = null;
+    rollback = net.createRollback({ game: netGame, transport: l.transport, localPort: l.slot(), slots: netSlots, inputDelay: INPUT_DELAY, maxRollback: MAX_ROLLBACK });
+    sfx.select();
+    show("online-fight");
   };
   const selectMode = (mode: string): void => {
+    notice = "";
+    if (mode === "online") {
+      if (!options.netplay) return;
+      link = options.netplay.connect();
+      cfg.mode = "online";
+      show("online");
+      return;
+    }
     cfg.mode = mode;
     cfg.cpu = mode === "2p" ? [false, false] : [false, true];
     sel[0].cur = CHAR_IDS.indexOf(cfg.chars[0]);
@@ -272,6 +330,7 @@ export function createMenu(options: MenuOptions): Menu {
   const choose = (p: number): void => {
     cfg.chars[p] = CHAR_IDS[sel[p].cur];
     sel[p].chosen = true;
+    if (online() && p === 0 && link) link.sendLobby({ t: "pick", char: cfg.chars[0] });
     sfx.medallion();
     voice(`name_${cfg.chars[p]}`, 1);
   };
@@ -279,11 +338,13 @@ export function createMenu(options: MenuOptions): Menu {
     if (!sel[p].chosen) {
       if (p === 0) {
         sfx.back();
-        show("title");
+        if (online()) leaveOnline("");
+        else show("title");
       }
       return;
     }
     sel[p].chosen = false;
+    if (online() && p === 0 && link) link.sendLobby({ t: "unpick" });
     sfx.back();
   };
   const moveCursor = (p: number, d: number): void => {
@@ -292,7 +353,7 @@ export function createMenu(options: MenuOptions): Menu {
     sfx.move();
   };
   const toggleCPU = (): void => {
-    if (cfg.mode === "training") return;
+    if (cfg.mode === "training" || online()) return;
     cfg.cpu[1] = !cfg.cpu[1];
     cfg.mode = cfg.cpu[1] ? "cpu" : "2p";
     sel[1].chosen = cfg.cpu[1];
@@ -301,6 +362,17 @@ export function createMenu(options: MenuOptions): Menu {
   const fight = (): void => {
     if (!ready()) {
       sfx.back();
+      return;
+    }
+    if (online()) {
+      // The host decides stage, stocks and the shared seed; the guest waits for that.
+      const l = link;
+      if (!l || !host()) return;
+      const seed = Math.floor(Math.random() * 4294967296) >>> 0;
+      // The host is slot 0, so its own pick (shown as P1) goes first.
+      const start: StartMessage = { t: "start", seed, chars: [cfg.chars[0], cfg.chars[1]], stage: cfg.stage, stocks: cfg.stocks };
+      l.sendLobby(start);
+      beginOnline(start);
       return;
     }
     sfx.select();
@@ -340,9 +412,10 @@ export function createMenu(options: MenuOptions): Menu {
   };
   // Rows P1 walks once chosen: the stage row, each stepper, then the ready button.
   const optionNames = (): string[] => {
+    if (online() && !host()) return ["ready"];
     const out: string[] = ["stage"];
     if (cfg.mode !== "training") out.push("stocks");
-    if (cfg.cpu[1] && cfg.mode !== "training") out.push("cpuLevel");
+    if (cfg.cpu[1] && cfg.mode !== "training" && !online()) out.push("cpuLevel");
     out.push("ready");
     return out;
   };
@@ -366,12 +439,36 @@ export function createMenu(options: MenuOptions): Menu {
     if (n0.confirm || n0.start) onPick(buttons[focus].id);
   };
 
+  const stepLobby = (): boolean => {
+    const l = link;
+    if (!l) return false;
+    if (l.status() !== "paired") {
+      leaveOnline(l.status() === "closed" ? "Se perdió la conexión." : "Tu rival salió de la sala.");
+      return true;
+    }
+    for (const message of l.receiveLobby()) {
+      if (message.t === "pick") {
+        cfg.chars[1] = message.char;
+        sel[1].cur = CHAR_IDS.indexOf(message.char);
+        sel[1].chosen = true;
+      } else if (message.t === "unpick") {
+        sel[1].chosen = false;
+      } else if (message.t === "start" && !host()) {
+        // Start lists chars by slot: the guest's own pick is chars[1].
+        beginOnline(message);
+        return true;
+      }
+    }
+    return false;
+  };
+
   const stepSelect = (): void => {
+    if (online() && stepLobby()) return;
     const cardList = cards();
     for (let i = 0; i < cardList.length; i++) {
       if (!tapped(cardList[i])) continue;
       // Taps pick for P1, then for a human P2 still choosing.
-      const p = sel[0].chosen && !cfg.cpu[1] && !sel[1].chosen ? 1 : 0;
+      const p = sel[0].chosen && !cfg.cpu[1] && !sel[1].chosen && !online() ? 1 : 0;
       sel[p].cur = i;
       choose(p);
       return;
@@ -381,7 +478,8 @@ export function createMenu(options: MenuOptions): Menu {
       return;
     }
     const rows = optionRows();
-    for (const b of rows[0]) {
+    const stageRow: Button[] = rows.length > 0 ? rows[0] : [];
+    for (const b of stageRow) {
       if (tapped(b)) {
         cfg.stage = b.id.slice(6);
         sfx.move();
@@ -407,7 +505,7 @@ export function createMenu(options: MenuOptions): Menu {
       return;
     }
     for (let p = 0; p < 2; p++) {
-      if (cfg.cpu[p]) continue;
+      if (cfg.cpu[p] || (online() && p === 1)) continue;
       const n = nav[p];
       if (!sel[p].chosen) {
         if (n.left || n.up) moveCursor(p, -1);
@@ -434,7 +532,8 @@ export function createMenu(options: MenuOptions): Menu {
       const name = names[optFocus];
       if (name !== "ready" && n.left) adjust(name, -1);
       if (name !== "ready" && n.right) adjust(name, 1);
-      if (n.confirm && name === "ready") fight();
+      // Once both have chosen, confirm starts the match from any row (the original's Enter).
+      if (n.confirm && (name === "ready" || ready())) fight();
     }
   };
 
@@ -448,7 +547,33 @@ export function createMenu(options: MenuOptions): Menu {
       });
     } else if (screen === "select") {
       stepSelect();
-    } else if (screen === "fight") {
+    } else if (screen === "online") {
+      const l = link;
+      if (!l || l.status() === "closed") leaveOnline("No se pudo conectar al servidor.");
+      else if (l.status() === "paired") enterOnlineSelect();
+      else if (nav[0].back || tapped(backButton())) {
+        sfx.back();
+        leaveOnline("");
+      }
+    } else if (screen === "online-fight") {
+      const l = link;
+      const rb = rollback;
+      if (!l || !rb) return;
+      if (l.status() !== "paired") {
+        leaveOnline("Tu rival se desconectó.");
+        return;
+      }
+      const me = netGame.fighters[l.slot()];
+      rb.tick(encodeInput(localController.read(me, netGame)));
+      // The match is over only once the frame that ended it is confirmed by both peers.
+      if (netGame.phase === "gameover" && netGame.phaseT >= 160 && rb.confirmedFrame() >= rb.stats().frame) {
+        results = netGame.results();
+        resultsT = 0;
+        show("results");
+        const w = results.winner;
+        playMusic(w ? `victory_${w.charId}` : "", false);
+        voice("winnerIs", 1);
+      }
       const wantsPause = nav[0].start || nav[1].start || (key("Escape") && nav[0].back) || (options.touch !== null && tapped(pauseTouchButton()));
       if (wantsPause) pause(true);
       else game.step();
@@ -467,6 +592,20 @@ export function createMenu(options: MenuOptions): Menu {
       const w = results ? results.winner : null;
       if (resultsT === 87 && w) voice(`name_${w.charId}`, 1);
       if (resultsT < 30) return;
+      if (online()) {
+        const l = link;
+        // Keep feeding the peer so it can confirm the same ending.
+        if (rollback) rollback.settle();
+        if (l && l.status() !== "paired") {
+          leaveOnline("Tu rival salió de la sala.");
+          return;
+        }
+        menuList(resultButtons(), (id: string): void => {
+          if (id === "menu") leaveOnline("");
+          else enterOnlineSelect();
+        });
+        return;
+      }
       menuList(resultButtons(), (id: string): void => {
         if (id === "rematch") fight();
         else if (id === "menu") quitToMenu();
@@ -570,6 +709,19 @@ export function createMenu(options: MenuOptions): Menu {
     text(ctx, "Peleas de la comunidad Crafter Station", W / 2, 178, 22, "#c9c2ff", "center", "Archivo Black");
     const buttons = titleButtons();
     for (let i = 0; i < buttons.length; i++) button(ctx, buttons[i], i === focus, 34);
+    if (notice !== "") text(ctx, notice, W / 2, H - 30, 22, "#ff8c8c", "center", "Archivo Black");
+  };
+
+  const renderOnline = (ctx: Draw2D): void => {
+    backdrop(ctx);
+    text(ctx, "EN LÍNEA", W / 2, 150, 90, "#ffd23f", "center", "Bangers");
+    const l = link;
+    const status = l ? l.status() : "closed";
+    const dots = ".".repeat(1 + (Math.floor(t / 20) % 3));
+    const line = status === "connecting" ? `Conectando${dots}` : status === "waiting" ? `Esperando rival${dots}` : "Conectado";
+    text(ctx, line, W / 2, 300, 44, "#ffffff", "center", "Bangers");
+    if (l) text(ctx, `Sala ${l.room.slice(0, 8)}: comparte esta Activity o este enlace con tu rival`, W / 2, 360, 20, "#c9c2ff", "center", "Archivo Black");
+    button(ctx, backButton(), false, 28);
   };
 
   const renderPanel = (ctx: Draw2D, p: number): void => {
@@ -580,13 +732,20 @@ export function createMenu(options: MenuOptions): Menu {
     const c = getCharacter(id);
     const col = variantOf(p) === "alt" ? c.alt : c.colors;
     const tagColor = cpu ? "#8a8a99" : p === 0 ? "#ff4d5e" : "#3fa9ff";
+    if (online() && p === 1 && !s.chosen) {
+      panel(ctx, r.x, r.y, r.w, r.h, "#1d1838", tagColor);
+      text(ctx, "RIVAL", r.x + r.w / 2, r.y + 80, 40, "#3fa9ff", "center", "Bangers");
+      text(ctx, "eligiendo...", r.x + r.w / 2, r.y + 130, 20, "#c9c2ff", "center", "Archivo Black");
+      return;
+    }
     panel(ctx, r.x, r.y, r.w, r.h, shade(col.main, -65), tagColor);
     face(ctx, id, variantOf(p), r.x + 12, r.y + 52, 170, 170, s.chosen ? 1 : 0.45);
     const tag = tagRect(p);
     ctx.setFillStyle(tagColor);
     ctx.fillRect(tag.x, tag.y, tag.w, tag.h);
-    const swap = p === 1 && cfg.mode !== "training" ? " ⇄" : "";
-    text(ctx, (cpu ? "CPU" : `P${p + 1}`) + swap, tag.x + tag.w / 2, tag.y + tag.h / 2 + 2, 28, "#ffffff", "center", "Bangers");
+    const swap = p === 1 && cfg.mode !== "training" && !online() ? " ⇄" : "";
+    const label = online() ? (p === 0 ? "TÚ" : "RIVAL") : cpu ? "CPU" : `P${p + 1}`;
+    text(ctx, label + swap, tag.x + tag.w / 2, tag.y + tag.h / 2 + 2, 28, "#ffffff", "center", "Bangers");
     const tx = r.x + 196;
     text(ctx, s.chosen ? c.name : `¿${c.name}?`, tx, r.y + 30, 40, shade(col.main, 50), "left", "Bangers");
     text(ctx, c.title, tx, r.y + 68, 15, "#d8d2f5", "left", "Archivo Black");
@@ -630,7 +789,7 @@ export function createMenu(options: MenuOptions): Menu {
         ctx.beginPath();
         ctx.arc(tx + 20, b.y + 22, 20, 0, Math.PI * 2, false);
         ctx.fill();
-        text(ctx, cfg.cpu[p] ? "CPU" : `P${p + 1}`, tx + 20, b.y + 24, 18, "#ffffff", "center", "Bangers");
+        text(ctx, online() ? (p === 0 ? "TÚ" : "RIV") : cfg.cpu[p] ? "CPU" : `P${p + 1}`, tx + 20, b.y + 24, 18, "#ffffff", "center", "Bangers");
       }
     }
     renderPanel(ctx, 0);
@@ -638,7 +797,8 @@ export function createMenu(options: MenuOptions): Menu {
     const rows = optionRows();
     const names = optionNames();
     const focusName = sel[0].chosen && !cfg.cpu[0] ? names[clamp(optFocus, 0, names.length - 1)] : "";
-    for (const b of rows[0]) {
+    const stageRow: Button[] = rows.length > 0 ? rows[0] : [];
+    for (const b of stageRow) {
       const on = b.id.slice(6) === cfg.stage;
       panel(ctx, b.x, b.y, b.w, b.h, on ? "#ffd23f" : "#2a2347", focusName === "stage" ? "#ffffff" : on ? "#fff7cf" : "#5b4f8a");
       text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2 + 2, 24, on ? INK : "#ffffff", "center", "Bangers");
@@ -655,11 +815,14 @@ export function createMenu(options: MenuOptions): Menu {
       text(ctx, label, (minus.x + plus.x + plus.w) / 2, minus.y + minus.h / 2 + 2, 26, focused ? "#ffd23f" : "#ffffff", "center", "Bangers");
     }
     button(ctx, backButton(), false, 28);
-    if (ready()) {
+    if (ready() && online() && !host()) {
+      text(ctx, "Esperando al anfitrión...", W - 30, H - 50, 24, "#ffd23f", "right", "Bangers");
+    } else if (ready()) {
       const b = readyButton();
       const glow = focusName === "ready" || Math.floor(t / 20) % 2 === 0;
       button(ctx, b, glow, 36);
     }
+    if (online() && link) text(ctx, `Sala ${link.room.slice(0, 8)}`, 30, 44, 20, "#9f97cc", "left", "Archivo Black");
     if (options.touch === null) {
       text(ctx, "Mover: WASD / Flechas / Stick  ·  Elegir: F / K / A  ·  Soltar: G / L / B  ·  Pelear: Enter / Start", W / 2, H - 14, 13, "#9f97cc", "center", "Archivo Black");
     }
@@ -722,7 +885,22 @@ export function createMenu(options: MenuOptions): Menu {
       renderSelect(ctx);
       return;
     }
-    game.render(ctx);
+    if (screen === "online") {
+      renderOnline(ctx);
+      return;
+    }
+    const active = online() ? netGame : game;
+    active.render(ctx);
+    const rb = rollback;
+    if (screen === "online-fight" && rb) {
+      const st = rb.stats();
+      if (options.touch) options.touch.draw(ctx);
+      ctx.setFont("14px Archivo Black");
+      ctx.setTextAlign("left");
+      ctx.setTextBaseline("top");
+      ctx.setFillStyle(st.desync >= 0 ? "#ff4d5e" : "rgba(255,255,255,0.6)");
+      ctx.fillText(st.desync >= 0 ? `DESYNC en frame ${st.desync}` : `EN LÍNEA · rollbacks ${st.rollbacks} · máx ${st.longestRollback}f`, 12, 10);
+    }
     const controls = options.touch;
     if (screen === "fight" && controls) {
       controls.draw(ctx);

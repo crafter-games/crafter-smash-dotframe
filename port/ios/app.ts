@@ -50,7 +50,7 @@ export function init(base: string): void {
   const created = new Game(platform.gpu, width, LOGICAL_HEIGHT, (port: number, cpu: boolean, level: number) =>
     port === 0 && !cpu ? controls.controller : createCPUController(level),
   );
-  menu = createMenu({ game: created, input: platform.input, width, height: LOGICAL_HEIGHT, modes: ["cpu", "training"], touch: controls });
+  menu = createMenu({ game: created, input: platform.input, width, height: LOGICAL_HEIGHT, modes: ["cpu", "training"], touch: controls, netplay: null });
   ctx = draw;
 }
 

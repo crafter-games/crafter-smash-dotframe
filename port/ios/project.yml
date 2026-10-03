@@ -1,0 +1,58 @@
+name: CrafterSmash
+options:
+  bundleIdPrefix: run.crafter
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  CrafterSmash:
+    type: application
+    platform: iOS
+    sources:
+      - path: host/main.c
+      - path: build/smash_glue.c
+      - path: ../../../dotframe/native/df_native.c
+      - path: ../../../dotframe/native/df_audio.c
+      - path: ../dist/web
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: run.crafter.smash
+        DEVELOPMENT_TEAM: PK4JFXUL2L
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_FILE: host/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/../../../dotframe/vendor/SDL3-3.4.16/include
+          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/include
+          - $(SRCROOT)/../../../dotframe/native
+        LIBRARY_SEARCH_PATHS:
+          - $(SRCROOT)/build/.scriptc
+          - $(SRCROOT)/../../../dotframe/vendor/build/sdl-ios/Release-iphoneos
+          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/lib
+        OTHER_LDFLAGS:
+          - $(SRCROOT)/build/.scriptc/app.lib.a
+          - $(SRCROOT)/../../../dotframe/vendor/build/sdl-ios/Release-iphoneos/libSDL3.a
+          - $(SRCROOT)/../../../dotframe/vendor/wgpu/ios/lib/libwgpu_native.a
+          - -lc++
+          - -liconv
+        GCC_WARN_INHIBIT_ALL_WARNINGS: YES
+        ENABLE_BITCODE: NO
+    dependencies:
+      - sdk: UIKit.framework
+      - sdk: Foundation.framework
+      - sdk: Metal.framework
+      - sdk: QuartzCore.framework
+      - sdk: AVFoundation.framework
+      - sdk: AudioToolbox.framework
+      - sdk: CoreAudio.framework
+      - sdk: CoreBluetooth.framework
+      - sdk: CoreGraphics.framework
+      - sdk: CoreHaptics.framework
+      - sdk: CoreMotion.framework
+      - sdk: GameController.framework
+      - sdk: IOSurface.framework
+      - sdk: UniformTypeIdentifiers.framework
+      - sdk: CoreMedia.framework
+      - sdk: CoreVideo.framework
+      - sdk: OpenGLES.framework

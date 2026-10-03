@@ -25,9 +25,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     SDL_Log("crafter-smash: %d callbacks failed to register", failed);
     return SDL_APP_FAILURE;
   }
-  // The bundle's resource directory, with a trailing separator.
-  const char *base = SDL_GetBasePath();
-  if (!base) return SDL_APP_FAILURE;
+  // Assets are bundled as the web build under <bundle>/web.
+  const char *bundle = SDL_GetBasePath();
+  if (!bundle) return SDL_APP_FAILURE;
+  char base[4096];
+  SDL_snprintf(base, sizeof base, "%sweb", bundle);
   smash_init((const uint8_t *)base, (int64_t)strlen(base));
   g_start = SDL_GetTicksNS();
   return SDL_APP_CONTINUE;

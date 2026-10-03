@@ -405,6 +405,7 @@ export class Game {
       kind: o.kind,
       noFlinch: o.noFlinch,
       onHit: o.onHit,
+      dir: o.dir,
     });
   }
 

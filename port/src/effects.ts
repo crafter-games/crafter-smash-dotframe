@@ -30,6 +30,19 @@ interface FloatText {
   vy: number;
 }
 
+export interface ParticleOptions {
+  x: number;
+  y: number;
+  vx?: number;
+  vy?: number;
+  life?: number;
+  size?: number;
+  color?: string;
+  grav?: number;
+  drag?: number;
+  kind?: string;
+}
+
 export interface TextOptions {
   vy?: number;
   life?: number;
@@ -113,6 +126,24 @@ export class Effects {
     this.rings.push({ x, y, r, max, life, maxLife: life, color, w, hex });
   }
 
+  // Raw particle, as js/effects.js p(o).
+  p(o: ParticleOptions): void {
+    const life = o.life ?? 20;
+    this.parts.push({
+      x: o.x,
+      y: o.y,
+      vx: o.vx ?? 0,
+      vy: o.vy ?? 0,
+      life,
+      max: life,
+      size: o.size ?? 4,
+      color: o.color ?? "#fff",
+      grav: o.grav ?? 0,
+      drag: o.drag ?? 0.92,
+      kind: o.kind ?? "dot",
+    });
+  }
+
   spark(x: number, y: number, power: number, color: string): void {
     const n = Math.floor(6 + power * 6);
     for (let i = 0; i < n; i++) {
@@ -142,6 +173,10 @@ export class Effects {
   }
 
   dust(x: number, y: number, dir: number, n: number): void {
+    this.dustColored(x, y, dir, n, "rgba(230,220,255,.7)");
+  }
+
+  dustColored(x: number, y: number, dir: number, n: number, color: string): void {
     for (let i = 0; i < n; i++) {
       this.particle(
         x + rand(-10, 10),
@@ -150,7 +185,7 @@ export class Effects {
         rand(-2.5, -0.5),
         randi(16, 28),
         rand(5, 11),
-        "rgba(230,220,255,.7)",
+        color,
         "puff",
         0.9,
       );

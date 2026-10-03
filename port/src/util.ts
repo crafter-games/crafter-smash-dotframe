@@ -6,9 +6,22 @@ export const DEG = Math.PI / 180;
 export const clamp = (v: number, a: number, b: number): number => (v < a ? a : v > b ? b : v);
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 export const approach = (v: number, t: number, d: number): number => (v < t ? Math.min(v + d, t) : Math.max(v - d, t));
-export const rand = (a: number, b: number): number => a + Math.random() * (b - a);
+// Simulation randomness: a seeded mulberry32 so netplay peers (and rollback re-simulation) draw the same numbers.
+// Its state is part of what a rollback snapshot saves.
+export const rng = { state: 1 };
+export function seedRandom(seed: number): void {
+  rng.state = seed >>> 0;
+}
+export function random(): number {
+  rng.state = (rng.state + 0x6d2b79f5) >>> 0;
+  let t = rng.state;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+export const rand = (a: number, b: number): number => a + random() * (b - a);
 export const randi = (a: number, b: number): number => Math.floor(rand(a, b + 1));
-export const chance = (p: number): boolean => Math.random() < p;
+export const chance = (p: number): boolean => random() < p;
 export const sgn = (v: number): number => (v > 0 ? 1 : v < 0 ? -1 : 0);
 export const easeOut = (t: number): number => 1 - (1 - t) * (1 - t);
 

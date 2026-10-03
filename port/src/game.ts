@@ -9,7 +9,7 @@ import { duckMusic, playMusic, sfx, voice } from "./sound";
 import { faces } from "./sprites";
 import { type Camera, drawStageBackground, drawStageForeground, makeStage, type Stage, updateStage } from "./stages";
 import { H, type Hitbox } from "./types";
-import { circleRect, clamp, DEG, lerp, rand, rectRect, sgn, SZ, TAU } from "./util";
+import { circleRect, clamp, DEG, lerp, rand, random, rectRect, rng, sgn, SZ, TAU } from "./util";
 
 const KB_DECAY = 0.24;
 
@@ -826,7 +826,7 @@ export class Game {
     const y = clamp(f.y - 50, v.y + 40, v.y + v.h - 40);
     const m = this.stage.main;
     const ang = Math.atan2(m.y - 200 - y, (m.x1 + m.x2) / 2 - x);
-    if (f.y < b0.t && Math.random() < 0.6) {
+    if (f.y < b0.t && random() < 0.6) {
       // Star KO: flies into the background.
       this.fx.starKO(x, v.y + 60, f);
       sfx.starKO();
@@ -945,7 +945,15 @@ export class Game {
   }
 
   // ---------- Rendering ----------
+  // Drawing may roll cosmetic randomness; it must not advance the simulation's generator, or netplay peers
+  // that render at different rates would diverge.
   render(ctx: Draw2D): void {
+    const state = rng.state;
+    this.renderFrame(ctx);
+    rng.state = state;
+  }
+
+  private renderFrame(ctx: Draw2D): void {
     const W = this.W;
     const H = this.H;
     this.updateCamera();

@@ -2,7 +2,7 @@
 import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import { type Controller, emptyInput, type RawInput } from "./input";
-import { randi, sgn } from "./util";
+import { random, randi, sgn } from "./util";
 
 interface InputPatch {
   x?: number;
@@ -21,7 +21,7 @@ interface Step {
   aim: boolean;
 }
 
-const chance = (p: number): boolean => Math.random() < p;
+const chance = (p: number): boolean => random() < p;
 
 function apply(out: RawInput, patch: InputPatch): void {
   if (patch.x !== undefined) out.x = patch.x;
@@ -36,11 +36,11 @@ function apply(out: RawInput, patch: InputPatch): void {
 const step = (frames: number, input: InputPatch): Step => ({ frames, input, aim: false });
 
 function pickSteps(options: Step[][]): Step[] {
-  return options[Math.floor(Math.random() * options.length)];
+  return options[Math.floor(random() * options.length)];
 }
 
 function pickPatch(options: InputPatch[]): InputPatch {
-  return options[Math.floor(Math.random() * options.length)];
+  return options[Math.floor(random() * options.length)];
 }
 
 const STUN_STATES = new Set(["hitstun", "tumble", "grabbed", "ledge", "down", "dead"]);

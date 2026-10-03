@@ -7,7 +7,7 @@ import type { PoseOverride } from "./pose";
 import { play, say, sfx, voice } from "./sound";
 import { pick, spawnMiku, summonPokemon, SWEARS, throwKirby } from "./summons";
 import { H } from "./types";
-import { approach, circleRect, DEG, lerp, rand, sgn, SZ } from "./util";
+import { approach, circleRect, DEG, lerp, rand, random, sgn, SZ } from "./util";
 
 // ---------- Railly ----------
 
@@ -914,7 +914,7 @@ export const shiara_dspecial_update = (f: Fighter, sf: number, g: Game): void =>
   if (sf === 10) {
     const words = SWEARS.slice();
     for (let i = words.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(random() * (i + 1));
       const swap = words[i];
       words[i] = words[j];
       words[j] = swap;

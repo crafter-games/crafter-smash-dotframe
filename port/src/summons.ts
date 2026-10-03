@@ -5,9 +5,9 @@ import type { Game, Projectile } from "./game";
 import { drawItem } from "./items";
 import { play, sfx } from "./sound";
 import { H } from "./types";
-import { rand, sgn, TAU } from "./util";
+import { rand, random, sgn, TAU } from "./util";
 
-export const pick = (values: string[]): string => values[Math.floor(Math.random() * values.length)];
+export const pick = (values: string[]): string => values[Math.floor(random() * values.length)];
 
 interface Pokemon {
   img: string;
@@ -24,7 +24,7 @@ const POKEMON: Pokemon[] = [
 
 export function summonPokemon(owner: Fighter, x: number, y: number, g: Game, facing: number): void {
   if (g.countProjs(owner, "pokemon") > 0) return;
-  const P = POKEMON[Math.floor(Math.random() * POKEMON.length)];
+  const P = POKEMON[Math.floor(random() * POKEMON.length)];
   sfx.appear();
   g.fx.text(x, y - 70, P.name, P.color, 20, { life: 60, max: 60 });
   g.fx.shockwave(x, y, "#fff", 60);

@@ -1,6 +1,7 @@
 // Melee sound effects and announcer plus music, ported from js/audio.js onto dotframe's Audio.
 import type { AudioPlayer } from "../../vendor/dotframe/src/audio";
-import { rand } from "./util";
+// Pitch variation is cosmetic, so it stays off the simulation's seeded generator.
+const rand = (a: number, b: number): number => a + Math.random() * (b - a);
 
 const MUSIC_VOLUME = 0.45;
 
@@ -9,6 +10,8 @@ const sounds = new Map<string, number>();
 const tracks = new Map<string, number>();
 let musicOn = true;
 let musicName = "";
+// Rollback re-simulates frames already heard; it mutes sound while it does.
+export const soundGate = { muted: false };
 
 export function initSound(platformAudio: AudioPlayer): void {
   audio = platformAudio;
@@ -25,13 +28,14 @@ export function registerTrack(name: string, id: number): void {
 
 export function play(name: string, volume: number, rate: number): void {
   const a = audio;
+  if (soundGate.muted) return;
   const sound = sounds.get(name);
   if (a && sound !== undefined) a.play(sound, volume, rate);
 }
 
 function tone(frequency: number, duration: number, volume: number): void {
   const a = audio;
-  if (a) a.tone(frequency, duration, volume);
+  if (a && !soundGate.muted) a.tone(frequency, duration, volume);
 }
 
 export const sfx = {

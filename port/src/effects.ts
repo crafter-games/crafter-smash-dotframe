@@ -3,7 +3,7 @@ import type { Draw2D } from "../../vendor/dotframe/src/draw2d";
 import type { Fighter } from "./fighter";
 import { BASE_POSE, mergePose, type Pose } from "./pose";
 import { drawFighterBody, drawSpriteWorld } from "./sprites";
-import { clamp, lerp, rand, randi, TAU } from "./util";
+import { clamp, lerp, rand, randi, random, TAU } from "./util";
 
 interface Particle {
   x: number;
@@ -89,7 +89,7 @@ interface StarKO {
   t: number;
 }
 
-const pick = (values: string[]): string => values[Math.floor(Math.random() * values.length)];
+const pick = (values: string[]): string => values[Math.floor(random() * values.length)];
 
 export class Effects {
   parts: Particle[] = [];

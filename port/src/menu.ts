@@ -574,6 +574,7 @@ export function createMenu(options: MenuOptions): Menu {
         playMusic(w ? `victory_${w.charId}` : "", false);
         voice("winnerIs", 1);
       }
+    } else if (screen === "fight") {
       const wantsPause = nav[0].start || nav[1].start || (key("Escape") && nav[0].back) || (options.touch !== null && tapped(pauseTouchButton()));
       if (wantsPause) pause(true);
       else game.step();

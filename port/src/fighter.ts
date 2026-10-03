@@ -1788,7 +1788,8 @@ export class Fighter {
   draw(ctx: Draw2D): void {
     if (this.state === "dead") return;
     const g = this.game;
-    this.pose = this.getPose();
+    // Computed per draw and kept local: drawing must not write simulation state.
+    const pose = this.getPose();
     let x = this.x + this.drawOff.x;
     let y = this.y + this.drawOff.y;
     if (this.hitlag > 0 && this.pendingKB) {
@@ -1825,16 +1826,16 @@ export class Fighter {
     }
     let alpha = 1;
     if (this.isIntangible() && this.state !== "respawn") alpha = this.invincible > 0 ? (g.frame % 6 < 3 ? 0.55 : 0.9) : 0.55;
-    drawFighterBody(ctx, this, this.pose, x, y, this.facing, alpha, "");
+    drawFighterBody(ctx, this, pose, x, y, this.facing, alpha, "");
     const move = this.move;
     if (this.state === "attack" && move && move.id === "dspecial" && this.reflecting && this.charId === "railly") drawShine(ctx, x, y - 60 * SZ, g.frame);
     if (this.beam) drawBeam(ctx, this, x, y);
     if (this.lcFlash > 0 || (this.chargeFlash && g.frame % 8 < 4)) {
       ctx.setGlobalAlpha(this.lcFlash > 0 ? (this.lcFlash / 10) * 0.8 : 0.5);
-      drawFighterBody(ctx, this, this.pose, x, y, this.facing, 1, "#fff");
+      drawFighterBody(ctx, this, pose, x, y, this.facing, 1, "#fff");
       ctx.setGlobalAlpha(1);
     }
-    if (this.hurtFlash > 0 && this.hurtFlash % 4 < 2) drawFighterBody(ctx, this, this.pose, x, y, this.facing, 0.6, "#ffffff");
+    if (this.hurtFlash > 0 && this.hurtFlash % 4 < 2) drawFighterBody(ctx, this, pose, x, y, this.facing, 0.6, "#ffffff");
     if (this.state === "attack" && move) {
       const drawOver = move.drawOver;
       if (drawOver) drawOver(ctx, this, g);

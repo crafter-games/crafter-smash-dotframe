@@ -258,10 +258,16 @@ export class Game {
       this.slowTick += 1;
       if (this.slowTick % 4 !== 0) {
         this.fx.update();
+        // Keep the fatal-blow zoom smooth while the simulation runs at a quarter speed.
+        this.updateCamera();
         return;
       }
     }
     this.tick();
+    for (let i = 0; i < this.hudShake.length; i++) if (this.hudShake[i] > 0) this.hudShake[i] -= 1;
+    // The camera is simulation state (KO effects and some supers place things in view), so it moves once per
+    // simulated frame, never per drawn frame: netplay peers draw at different refresh rates.
+    this.updateCamera();
   }
 
   // ---------- Simulation ----------
@@ -956,7 +962,6 @@ export class Game {
   private renderFrame(ctx: Draw2D): void {
     const W = this.W;
     const H = this.H;
-    this.updateCamera();
     const t = this.frame;
     ctx.resetTransform();
     ctx.setFillStyle("#07060f");
@@ -1238,7 +1243,6 @@ export class Game {
       const f = this.fighters[i];
       const cx = (W * (i + 1)) / (n + 1);
       const cy = H - 70 * sc;
-      if (this.hudShake[i] > 0) this.hudShake[i] -= 1;
       const shake = this.hudShake[i];
       const shx = shake ? rand(-1, 1) * shake * 0.7 : 0;
       const shy = shake ? rand(-1, 1) * shake * 0.7 : 0;

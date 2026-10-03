@@ -70,7 +70,7 @@ const MODE_LABELS = new Map<string, string>([
   ["online", "EN LÍNEA"],
 ]);
 const INPUT_DELAY = 2;
-const MAX_ROLLBACK = 8;
+const MAX_ROLLBACK = 12;
 const PAUSE_BUTTON = 44;
 const INK = "#0d0b1a";
 

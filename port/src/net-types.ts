@@ -3,8 +3,9 @@ import type { Game } from "./game";
 
 export interface InputMessage {
   t: "input";
-  // The sender's current frame, for pacing.
+  // The sender's current frame, and the latest `now` it has received from us (an echo, to measure the round trip).
   now: number;
+  ack: number;
   // Consecutive inputs starting at frame `from`.
   from: number;
   inputs: number[];

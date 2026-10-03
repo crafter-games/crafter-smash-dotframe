@@ -47,13 +47,13 @@ function reference(chars: string[], seed: number, inputs: number[][]): number {
   return checksum(game);
 }
 
-function netplay(chars: string[], seed: number, inputs: number[][], latency: number, jitter: number): { sums: number[]; rollbacks: number; longest: number; desync: number } {
+function netplay(chars: string[], seed: number, inputs: number[][], latency: number, jitter: number): { sums: number[]; rollbacks: number; longest: number; desync: number; ticks: number } {
   const net = link(latency, jitter, seed);
   const peers = [0, 1].map((port: number) => {
     const h = headless();
     seedRandom(seed);
     h.game.start({ ...MATCH, chars });
-    return { h, rb: createRollback({ game: h.game, transport: port === 0 ? net.a : net.b, localPort: port, slots: h.slots, inputDelay: DELAY, maxRollback: 10 }) };
+    return { h, rb: createRollback({ game: h.game, transport: port === 0 ? net.a : net.b, localPort: port, slots: h.slots, inputDelay: DELAY, maxRollback: 14 }) };
   });
   // Each peer owns the module RNG while it simulates, as two separate clients would.
   const rngs = [seed, seed];
@@ -62,7 +62,9 @@ function netplay(chars: string[], seed: number, inputs: number[][], latency: num
     fn();
     rngs[i] = readRandomState();
   };
+  let ticks = 0;
   for (let tick = 0; tick < FRAMES * 3; tick++) {
+    ticks = tick + 1;
     for (let i = 0; i < 2; i++) {
       const p = peers[i];
       run(i, (): void => {
@@ -74,7 +76,13 @@ function netplay(chars: string[], seed: number, inputs: number[][], latency: num
       });
     }
     net.advance();
+    if (peers.every((p) => p.rb.stats().frame >= FRAMES)) break;
+  }
+  const simulatedBy = ticks;
+  for (let tick = 0; tick < FRAMES; tick++) {
     if (peers.every((p) => p.rb.confirmedFrame() >= FRAMES)) break;
+    for (let i = 0; i < 2; i++) run(i, (): void => peers[i].rb.settle());
+    net.advance();
   }
   return {
     sums: peers.map((p, i): number => {
@@ -87,6 +95,7 @@ function netplay(chars: string[], seed: number, inputs: number[][], latency: num
     rollbacks: peers[0].rb.stats().rollbacks + peers[1].rb.stats().rollbacks,
     longest: Math.max(peers[0].rb.stats().longestRollback, peers[1].rb.stats().longestRollback),
     desync: Math.max(peers[0].rb.stats().desync, peers[1].rb.stats().desync),
+    ticks: simulatedBy,
   };
 }
 
@@ -113,5 +122,7 @@ for (const c of CASES) {
     expect(result.sums[0]).toBe(expected);
     expect(result.sums[1]).toBe(expected);
     if (c.latency > DELAY) expect(result.rollbacks).toBeGreaterThan(0);
+    // Latency costs rollbacks, not speed: both peers keep (close to) one frame per display tick.
+    expect(result.ticks).toBeLessThan(FRAMES * 1.05);
   });
 }

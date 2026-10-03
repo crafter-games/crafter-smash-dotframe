@@ -8,6 +8,8 @@ import { checksum, createSnapshotter, type Snapshot, type Snapshotter } from "./
 import { soundGate } from "./sound";
 
 const SUM_EVERY = 30;
+// Weight of each new sample in the round-trip and lead averages (an exponential moving average over about 10 ticks).
+const SMOOTHING = 0.1;
 // Inputs resent with every message so a late peer catches up without acknowledgments.
 const RESEND = 8;
 
@@ -26,6 +28,10 @@ export function createRollback(options: RollbackOptions): Rollback {
   // Every remote input below this frame is known.
   let confirmed = 0;
   let peerNow = 0;
+  // Round trip in frames (from echoed frames) and how far ahead of the peer we run, both smoothed so network
+  // jitter does not trigger waits.
+  let rtt = 0;
+  let ahead = 0;
   let sentSums = 0;
   const stats: RollbackStats = { frame: 0, rollbacks: 0, longestRollback: 0, stalls: 0, desync: -1 };
 
@@ -68,7 +74,10 @@ export function createRollback(options: RollbackOptions): Rollback {
         peerSums.set(message.frame, message.sum);
         continue;
       }
-      peerNow = Math.max(peerNow, message.now);
+      if (message.now >= peerNow) {
+        peerNow = message.now;
+        rtt = rtt * (1 - SMOOTHING) + Math.max(0, frame - message.ack) * SMOOTHING;
+      }
       for (let i = 0; i < message.inputs.length; i++) {
         const f = message.from + i;
         if (f < confirmed) continue;
@@ -103,15 +112,18 @@ export function createRollback(options: RollbackOptions): Rollback {
   const tick = (localInput: number): boolean => {
     settle();
     // Wait rather than predict too far, or run ahead of a slower peer.
-    if (frame - confirmed >= maxRollback || frame > peerNow + inputDelay + 1) {
+    // The peer's last reported frame is one trip old; its current frame is about that plus half the round trip.
+    // Waiting on the raw gap instead would make both peers wait for each other and play at round-trip speed.
+    ahead = ahead * (1 - SMOOTHING) + (frame - (peerNow + rtt / 2)) * SMOOTHING;
+    if (frame - confirmed >= maxRollback || ahead > 1) {
       stats.stalls += 1;
-      transport.send({ t: "input", now: frame, from: Math.max(0, frame + inputDelay - RESEND), inputs: local.slice(Math.max(0, frame + inputDelay - RESEND), frame + inputDelay) });
+      transport.send({ t: "input", now: frame, ack: peerNow, from: Math.max(0, frame + inputDelay - RESEND), inputs: local.slice(Math.max(0, frame + inputDelay - RESEND), frame + inputDelay) });
       return false;
     }
 
     local[frame + inputDelay] = localInput;
     const from = Math.max(0, frame + inputDelay + 1 - RESEND);
-    transport.send({ t: "input", now: frame, from, inputs: local.slice(from, frame + inputDelay + 1) });
+    transport.send({ t: "input", now: frame, ack: peerNow, from, inputs: local.slice(from, frame + inputDelay + 1) });
     simulate(frame);
     frame += 1;
 

@@ -71,7 +71,7 @@ const MODE_LABELS = new Map<string, string>([
 ]);
 const INPUT_DELAY = 2;
 // About 330 ms at 60 Hz: past this unconfirmed span a peer waits instead of predicting.
-const MAX_ROLLBACK = 20;
+export const MAX_ROLLBACK = 20;
 const PAUSE_BUTTON = 44;
 const INK = "#0d0b1a";
 

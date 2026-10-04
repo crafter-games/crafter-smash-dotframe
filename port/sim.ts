@@ -3,6 +3,7 @@ import type { Gpu } from "../vendor/dotframe/src/gpu";
 import { defineSim, type SimPlatform, type SimRun } from "../vendor/dotframe/src/sim";
 import { loadMatchAssets, windowOptions } from "./match/game";
 import { Game, type GameConfig } from "./src/game";
+import { MAX_ROLLBACK } from "./src/menu";
 import type { Controller, RawInput } from "./src/input";
 import { decodeInput, encodeInput, NEUTRAL_INPUT } from "./src/netinput";
 import { checksum, createSnapshotter, type Snapshot } from "./src/snapshot";
@@ -15,6 +16,7 @@ export default defineSim({
   window: windowOptions,
   options: MATCH as unknown as Record<string, unknown>,
   neutral: NEUTRAL_INPUT,
+  rollbackWindow: MAX_ROLLBACK,
   encode: (input: unknown): number => encodeInput({ x: 0, y: 0, cx: 0, cy: 0, attack: false, special: false, shield: false, grab: false, jump: false, taunt: false, ...(input as Partial<RawInput>) }),
   random: (next: () => number): number =>
     encodeInput({ x: next() * 2 - 1, y: next() * 2 - 1, cx: 0, cy: 0, attack: next() < 0.3, special: next() < 0.15, shield: next() < 0.08, grab: next() < 0.05, jump: next() < 0.2, taunt: false }),

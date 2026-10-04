@@ -931,6 +931,8 @@ export class Fighter {
       if (m.smash) sfx.heavyWhiff();
       else sfx.whiff();
     }
+    // Spawned by the simulation, once: from draw() it repeated per drawn frame and differed between netplay peers.
+    if (this.sf === m.as && this.charId === "anthony" && m.id === "fsmash") g.fx.text(this.x + this.facing * 90, this.y - 140, "¡PUM!", "#ffd23f", 26, { life: 30, max: 30 });
     const update = m.update;
     if (update) {
       update(this, this.sf, g);
@@ -1850,7 +1852,6 @@ export class Fighter {
         ctx.scale(this.facing, 1);
         drawHammer(ctx, 0, 0, ang, 64);
         ctx.restore();
-        if (sf === move.as) g.fx.text(x + this.facing * 90, y - 140, "¡PUM!", "#ffd23f", 26, { life: 30, max: 30 });
       }
     }
     if (this.countering) {

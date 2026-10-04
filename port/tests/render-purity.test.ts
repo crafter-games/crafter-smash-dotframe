@@ -48,7 +48,8 @@ for (const id of CHAR_IDS) {
         if (i === 1) for (let r = 0; r < 3; r++) h.game.render(stubDraw);
         rngs[i] = rng.state;
       });
-      if (f % 50 === 0) diff = `${firstDifference(plain.game, drawn.game, "game", new Set())}`;
+      // Every 10 frames: render-spawned effects (texts, particles) live at least 16 frames.
+      if (f % 10 === 0) diff = `${firstDifference(plain.game, drawn.game, "game", new Set())}`;
       if (diff !== "") diff = `frame ${f}: ${diff}`;
     }
     expect(diff).toBe("");

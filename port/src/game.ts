@@ -442,6 +442,8 @@ export class Game {
       p.x += p.vx;
       p.y += p.vy;
       p.rot += p.spin;
+      // The peace sign's trail is simulation state; drawing it spawned one per drawn frame.
+      if (p.type === "peace" && p.t % 3 === 0) this.fx.sparkle(p.x - p.vx * 2, p.y, p.owner.c.accent);
       if (p.grav || p.roll) {
         for (const pl of this.stage.platforms) {
           if (p.vy >= 0 && py + p.r <= pl.y + 2 && p.y + p.r >= pl.y && p.x > pl.x1 && p.x < pl.x2) {
@@ -1042,7 +1044,6 @@ export class Game {
           ctx.setFillStyle("#b8ff3a");
           ctx.fillText("✌", 0, 0);
           ctx.restore();
-          if (p.t % 3 === 0) this.fx.sparkle(p.x - p.vx * 2, p.y, p.owner.c.accent);
           break;
         }
         case "img": {

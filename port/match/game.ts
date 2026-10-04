@@ -1,6 +1,7 @@
 // Playable milestone: one match with every engine piece of the port (stages, fighters, AI, effects, sound, HUD).
-import { createDraw2D } from "../../vendor/dotframe/src/draw2d";
-import type { Frame, Setup, Texture } from "../../vendor/dotframe/src/gpu";
+import type { Audio } from "../../vendor/dotframe/src/audio";
+import { createDraw2D, type Draw2D } from "../../vendor/dotframe/src/draw2d";
+import type { Frame, Gpu, Setup } from "../../vendor/dotframe/src/gpu";
 import type { Platform } from "../../vendor/dotframe/src/platform";
 import { createCPUController } from "../src/ai";
 import { CHAR_IDS } from "../src/characters";
@@ -28,6 +29,46 @@ export interface MatchOptions {
   netplay: Netplay | null;
 }
 
+export interface AssetTargets {
+  gpu: Gpu;
+  draw: Draw2D;
+  // Null skips sound and music (snapshots render silently).
+  audio: Audio | null;
+  load: LoadBytes;
+  root: string;
+  dotframe: string;
+}
+
+// Loads fonts, sprite data, sprites, items, and (with audio) sound and music. track() sees each parallel task.
+export async function loadMatchAssets(t: AssetTargets, track: (task: Promise<void>) => void = (): void => {}): Promise<void> {
+  const { gpu, draw, audio, load, root } = t;
+  const decoder = new TextDecoder();
+  const tasks: Promise<void>[] = [];
+  const add = (task: Promise<void>): void => {
+    tasks.push(task);
+    track(task);
+  };
+  const fontAtlas = await gpu.createImage(await load(`${t.dotframe}/assets/fonts/bangers.png`), true);
+  draw.addFont(["Bangers", "Press Start 2P"], fontAtlas, decoder.decode(await load(`${t.dotframe}/assets/fonts/bangers.json`)));
+  const archivo = await gpu.createImage(await load(`${t.dotframe}/assets/fonts/archivo-black.png`), true);
+  draw.addFont(["Archivo Black", "Arial Black", "Impact", "sans-serif", "monospace", "Menlo", "Rubik"], archivo, decoder.decode(await load(`${t.dotframe}/assets/fonts/archivo-black.json`)));
+  loadSpriteData(decoder.decode(await load(`${root}/port/assets/sprite-data.json`)));
+  for (const id of CHAR_IDS) {
+    for (const variant of ["base", "alt"]) {
+      add(load(`${root}/assets/sprites/${id}_${variant}.png`).then((png: Uint8Array): Promise<void> => loadAtlas(gpu, id + variant, png, false)));
+      add(load(`${root}/assets/sprites/${id}_${variant}_face.png`).then((png: Uint8Array): Promise<void> => loadAtlas(gpu, id + variant, png, true)));
+    }
+  }
+  for (const name of ITEM_NAMES) add(load(`${root}/assets/items/${name}.png`).then((png: Uint8Array): Promise<void> => loadItem(gpu, name, png)));
+  if (audio) {
+    for (const name of SFX_NAMES) add(load(`${root}/port/assets/sfx/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadSound(audio, name, mp3)));
+    const music = ["battlefield", "final_destination", "big_blue", "menu"];
+    for (const id of CHAR_IDS) music.push(`victory_${id}`);
+    for (const name of music) add(load(`${root}/assets/music/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadTrack(audio, name, mp3)));
+  }
+  for (const task of tasks) await task;
+}
+
 const STEP = 1 / 60;
 
 export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
@@ -36,7 +77,6 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
     const H = windowOptions.height;
     const ctx = createDraw2D(gpu, W, H);
     initSound(audio);
-    const decoder = new TextDecoder();
     let ready = false;
     let loaded = 0;
     let total = 0;
@@ -45,31 +85,12 @@ export function createSetup(load: LoadBytes, options: MatchOptions): Setup {
     );
 
     const loadAll = async (): Promise<void> => {
-      const root = options.root;
-      const tasks: Promise<void>[] = [];
-      const track = (task: Promise<void>): void => {
+      await loadMatchAssets({ gpu, draw: ctx, audio, load, root: options.root, dotframe: options.dotframe }, (task: Promise<void>): void => {
         total += 1;
-        tasks.push(task.then((): void => {
+        void task.then((): void => {
           loaded += 1;
-        }));
-      };
-      const fontAtlas = await gpu.createImage(await load(`${options.dotframe}/assets/fonts/bangers.png`), true);
-      ctx.addFont(["Bangers", "Press Start 2P"], fontAtlas, decoder.decode(await load(`${options.dotframe}/assets/fonts/bangers.json`)));
-      const archivo = await gpu.createImage(await load(`${options.dotframe}/assets/fonts/archivo-black.png`), true);
-      ctx.addFont(["Archivo Black", "Arial Black", "Impact", "sans-serif", "monospace", "Menlo", "Rubik"], archivo, decoder.decode(await load(`${options.dotframe}/assets/fonts/archivo-black.json`)));
-      loadSpriteData(decoder.decode(await load(`${root}/port/assets/sprite-data.json`)));
-      for (const id of CHAR_IDS) {
-        for (const variant of ["base", "alt"]) {
-          track(load(`${root}/assets/sprites/${id}_${variant}.png`).then((png: Uint8Array): Promise<void> => loadAtlas(gpu, id + variant, png, false)));
-          track(load(`${root}/assets/sprites/${id}_${variant}_face.png`).then((png: Uint8Array): Promise<void> => loadAtlas(gpu, id + variant, png, true)));
-        }
-      }
-      for (const name of ITEM_NAMES) track(load(`${root}/assets/items/${name}.png`).then((png: Uint8Array): Promise<void> => loadItem(gpu, name, png)));
-      for (const name of SFX_NAMES) track(load(`${root}/port/assets/sfx/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadSound(audio, name, mp3)));
-      const music = ["battlefield", "final_destination", "big_blue", "menu"];
-      for (const id of CHAR_IDS) music.push(`victory_${id}`);
-      for (const name of music) track(load(`${root}/assets/music/${name}.mp3`).then((mp3: Uint8Array): Promise<void> => loadTrack(audio, name, mp3)));
-      for (const task of tasks) await task;
+        });
+      });
       ready = true;
       if (options.config) game.start(options.config);
     };

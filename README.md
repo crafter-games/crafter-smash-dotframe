@@ -12,6 +12,20 @@ cd crafter-smash-dotframe/port
 bun install
 ```
 
+## dotframe CLI
+
+`dotframe.json` and `port/sim.ts` wire this game into the dotframe CLI (`bun vendor/dotframe/cli/main.ts`, or `dotframe` when installed):
+
+```sh
+dotframe sim --mash 7 --frames 1800 --json
+dotframe snap --frame 420 --mash 7 --out f420.png
+dotframe desync --latency 474ms --frames 1800
+dotframe build web && dotframe deploy web --prod --dry-run
+dotframe build ios && dotframe device install ios --dry-run
+```
+
+`cd port && bun run test` runs the unit tests, the golden replays in `port/replays/`, and a desync check.
+
 ## Web
 
 ```sh

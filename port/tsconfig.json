@@ -10,5 +10,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src", "stage-viewer/game.ts", "match/game.ts", "match/main.web.ts", "match/discord.ts"]
+  "include": ["src", "stage-viewer/game.ts", "match/game.ts", "match/main.web.ts", "match/discord.ts", "sim.ts"]
 }

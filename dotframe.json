@@ -1,0 +1,134 @@
+{
+  "name": "crafter-smash",
+  "sim": "port/sim.ts",
+  "targets": {
+    "web": {
+      "steps": [
+        {
+          "label": "bundle web",
+          "argv": [
+            "sh",
+            "port/scripts/build-web.sh"
+          ]
+        }
+      ],
+      "out": "port/dist/web",
+      "deploy": {
+        "provider": "vercel",
+        "project": "crafter-smash-dotframe",
+        "scope": "crafter-station"
+      }
+    },
+    "discord": {
+      "steps": [
+        {
+          "label": "bundle web (Discord serves the same build)",
+          "argv": [
+            "sh",
+            "port/scripts/build-web.sh"
+          ]
+        }
+      ],
+      "out": "port/dist/web",
+      "deploy": {
+        "provider": "vercel",
+        "project": "crafter-smash-dotframe",
+        "scope": "crafter-station"
+      }
+    },
+    "ios": {
+      "steps": [
+        {
+          "label": "library glue",
+          "argv": [
+            "bun",
+            "../vendor/dotframe/tools/gen-library-glue.ts",
+            "ios/app.json",
+            "ios/build"
+          ],
+          "cwd": "port"
+        },
+        {
+          "label": "scriptc library",
+          "argv": [
+            "scriptc",
+            "build",
+            "--lib",
+            "--profile",
+            "smash.profile.json"
+          ],
+          "cwd": "port/ios/build",
+          "env": {
+            "SCRIPTC_TARGET": "aarch64-apple-ios"
+          }
+        },
+        {
+          "label": "xcodegen",
+          "argv": [
+            "xcodegen",
+            "generate"
+          ],
+          "cwd": "port/ios"
+        },
+        {
+          "label": "xcodebuild",
+          "argv": [
+            "xcodebuild",
+            "-scheme",
+            "CrafterSmash",
+            "-destination",
+            "generic/platform=iOS",
+            "-allowProvisioningUpdates",
+            "-derivedDataPath",
+            "build/derived",
+            "build"
+          ],
+          "cwd": "port/ios"
+        }
+      ],
+      "app": "port/ios/build/derived/Build/Products/Debug-iphoneos/CrafterSmash.app",
+      "device": "00008120-001A5D690A52201E"
+    },
+    "macos": {
+      "steps": [
+        {
+          "label": "native match",
+          "argv": [
+            "sh",
+            "scripts/build-native.sh",
+            "macos",
+            "../../port/match/main.native.ts",
+            "smash-now"
+          ],
+          "cwd": "vendor/dotframe"
+        }
+      ],
+      "app": "vendor/dotframe/build/macos/smash-now"
+    }
+  },
+  "relay": {
+    "provider": "dokploy",
+    "compose": "GBIfGG6F5F6qvJDEoPzGS"
+  },
+  "links": [
+    {
+      "path": "vendor/dotframe/vendor/build",
+      "target": "~/Programming/crafter-games/dotframe/vendor/build"
+    },
+    {
+      "path": "vendor/dotframe/vendor/wgpu",
+      "target": "~/Programming/crafter-games/dotframe/vendor/wgpu"
+    },
+    {
+      "path": "vendor/dotframe/vendor/SDL3-3.4.16",
+      "target": "~/Programming/crafter-games/dotframe/vendor/SDL3-3.4.16"
+    }
+  ],
+  "assets": {
+    "localOnly": [
+      "assets/sprites",
+      "assets/music",
+      "port/assets/sfx"
+    ]
+  }
+}

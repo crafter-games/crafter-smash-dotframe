@@ -4,5 +4,8 @@
   "type": "module",
   "dependencies": {
     "@discord/embedded-app-sdk": "^2.5.0"
+  },
+  "scripts": {
+    "test": "bun test && bun ../vendor/dotframe/cli/main.ts replay verify replays/*.json && bun ../vendor/dotframe/cli/main.ts desync --latency 120ms --jitter 30ms --frames 3000"
   }
 }

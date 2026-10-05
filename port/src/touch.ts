@@ -5,6 +5,7 @@ import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import { type Controller, emptyInput, type RawInput, TAP_JUMP } from "./input";
 import { clamp, TAU } from "./util";
+import { dhypot } from "../../vendor/dotframe/src/detmath";
 
 interface Button {
   label: string;
@@ -48,7 +49,7 @@ export function createTouchControls(input: Input, width: number, height: number)
         stillDown = true;
         const dx = x - originX;
         const dy = y - originY;
-        const length = Math.hypot(dx, dy);
+        const length = dhypot(dx, dy);
         const scale = length > STICK_RADIUS ? STICK_RADIUS / length : 1;
         stickX = (dx * scale) / STICK_RADIUS;
         stickY = (dy * scale) / STICK_RADIUS;
@@ -68,7 +69,7 @@ export function createTouchControls(input: Input, width: number, height: number)
       for (let b = 0; b < BUTTONS.length; b++) {
         const bx = width + BUTTONS[b].dx;
         const by = height + BUTTONS[b].dy;
-        if (Math.hypot(x - bx, y - by) < BUTTON_RADIUS * 1.25) pressed[b] = true;
+        if (dhypot(x - bx, y - by) < BUTTON_RADIUS * 1.25) pressed[b] = true;
       }
     }
     if (!stillDown) {

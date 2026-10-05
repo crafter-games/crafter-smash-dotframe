@@ -4,6 +4,7 @@ import type { Fighter } from "./fighter";
 import { BASE_POSE, mergePose, type Pose } from "./pose";
 import { drawFighterBody, drawSpriteWorld } from "./sprites";
 import { clamp, lerp, rand, randi, random, TAU } from "./util";
+import { dcos, dsin } from "../../vendor/dotframe/src/detmath";
 
 interface Particle {
   x: number;
@@ -149,7 +150,7 @@ export class Effects {
     for (let i = 0; i < n; i++) {
       const a = rand(0, TAU);
       const s = rand(3, 9) * (0.6 + power * 0.5);
-      this.particle(x, y, Math.cos(a) * s, Math.sin(a) * s, randi(10, 18), rand(2, 4) + power, i % 2 ? "#fff" : color, "line", 0.92);
+      this.particle(x, y, dcos(a) * s, dsin(a) * s, randi(10, 18), rand(2, 4) + power, i % 2 ? "#fff" : color, "line", 0.92);
     }
     this.ring(x, y, 6, 26 + power * 26, 12, color, 4 + power * 2, false);
   }
@@ -215,7 +216,7 @@ export class Effects {
   swirl(x: number, y: number, color: string): void {
     for (let i = 0; i < 3; i++) {
       const a = rand(0, TAU);
-      this.particle(x + Math.cos(a) * 36, y + Math.sin(a) * 36, -Math.sin(a) * 4, Math.cos(a) * 4, 14, 4, color, "line", 0.92);
+      this.particle(x + dcos(a) * 36, y + dsin(a) * 36, -dsin(a) * 4, dcos(a) * 4, 14, 4, color, "line", 0.92);
     }
   }
 
@@ -236,7 +237,7 @@ export class Effects {
     for (let i = 0; i < 40; i++) {
       const a = ang + rand(-0.7, 0.7);
       const s = rand(6, 24);
-      this.particle(x, y, Math.cos(a) * s, Math.sin(a) * s, randi(20, 50), rand(4, 10), pick([color, "#fff", "#ffd23f"]), "line", 0.96);
+      this.particle(x, y, dcos(a) * s, dsin(a) * s, randi(20, 50), rand(4, 10), pick([color, "#fff", "#ffd23f"]), "line", 0.96);
     }
   }
 
@@ -289,7 +290,7 @@ export class Effects {
         ctx.restore();
       } else {
         const a = (k - 0.7) / 0.3;
-        const s2 = 40 * Math.sin(a * Math.PI);
+        const s2 = 40 * dsin(a * Math.PI);
         ctx.setFillStyle("#fff");
         ctx.beginPath();
         ctx.moveTo(st.x, st.y + 28 - s2);
@@ -334,8 +335,8 @@ export class Effects {
       if (r.hex) {
         for (let i = 0; i <= 6; i++) {
           const a = (i * TAU) / 6;
-          const px = r.x + Math.cos(a) * r.r;
-          const py = r.y + Math.sin(a) * r.r;
+          const px = r.x + dcos(a) * r.r;
+          const py = r.y + dsin(a) * r.r;
           if (i === 0) ctx.moveTo(px, py);
           else ctx.lineTo(px, py);
         }

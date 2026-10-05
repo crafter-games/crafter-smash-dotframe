@@ -10,6 +10,7 @@ import { faces } from "./sprites";
 import { type Camera, drawStageBackground, drawStageForeground, makeStage, type Stage, updateStage } from "./stages";
 import { H, type Hitbox } from "./types";
 import { circleRect, clamp, DEG, lerp, rand, random, rectRect, rng, sgn, SZ, TAU } from "./util";
+import { datan2, dcos, dhypot, dsin } from "../../vendor/dotframe/src/detmath";
 
 const KB_DECAY = 0.24;
 
@@ -437,7 +438,7 @@ export class Game {
       const update = p.update;
       if (update) update(p, this);
       if (p.grav) p.vy = Math.min(p.vy + p.grav, 14);
-      if (p.wave) p.vy = Math.cos(p.t * 0.16) * 2.4;
+      if (p.wave) p.vy = dcos(p.t * 0.16) * 2.4;
       const py = p.y;
       p.x += p.vx;
       p.y += p.vy;
@@ -473,7 +474,7 @@ export class Game {
     for (const a of this.projs) {
       for (const b of this.projs) {
         if (a === b || a.owner === b.owner || a.life <= 0 || b.life <= 0 || a.entity || b.entity || a.noClash || b.noClash) continue;
-        if (Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r) {
+        if (dhypot(a.x - b.x, a.y - b.y) < a.r + b.r) {
           a.life = 0;
           b.life = 0;
           this.fx.spark((a.x + b.x) / 2, (a.y + b.y) / 2, 1, "#fff");
@@ -742,14 +743,14 @@ export class Game {
     const m = this.stage.main;
     let x = t.x;
     let y = t.y;
-    let kvx = Math.cos(kb.ang * DEG) * kb.speed;
-    let kvy = -Math.sin(kb.ang * DEG) * kb.speed;
+    let kvx = dcos(kb.ang * DEG) * kb.speed;
+    let kvy = -dsin(kb.ang * DEG) * kb.speed;
     let vy = 0;
     for (let i = 0; i < 200; i++) {
       vy = Math.min(vy + t.stats.gravity, t.stats.maxFall);
       x += kvx;
       y += kvy + vy;
-      const s = Math.hypot(kvx, kvy);
+      const s = dhypot(kvx, kvy);
       if (s > 0) {
         const ns = Math.max(0, s - KB_DECAY);
         kvx *= ns / s;
@@ -833,7 +834,7 @@ export class Game {
     const x = clamp(f.x, v.x + 40, v.x + v.w - 40);
     const y = clamp(f.y - 50, v.y + 40, v.y + v.h - 40);
     const m = this.stage.main;
-    const ang = Math.atan2(m.y - 200 - y, (m.x1 + m.x2) / 2 - x);
+    const ang = datan2(m.y - 200 - y, (m.x1 + m.x2) / 2 - x);
     if (f.y < b0.t && random() < 0.6) {
       // Star KO: flies into the background.
       this.fx.starKO(x, v.y + 60, f);
@@ -1037,7 +1038,7 @@ export class Game {
           ctx.beginPath();
           ctx.arc(0, 0, p.r * 0.8, 0, TAU, false);
           ctx.fill();
-          ctx.rotate(Math.sin(p.t * 0.2) * 0.4);
+          ctx.rotate(dsin(p.t * 0.2) * 0.4);
           ctx.setFont(`${Math.round(p.r * 2)}px "Arial Black", sans-serif`);
           ctx.setTextAlign("center");
           ctx.setTextBaseline("middle");
@@ -1074,7 +1075,7 @@ export class Game {
         case "note": {
           ctx.save();
           ctx.translate(p.x, p.y);
-          ctx.rotate(Math.sin(p.t * 0.25) * 0.3);
+          ctx.rotate(dsin(p.t * 0.25) * 0.3);
           ctx.setFont(`bold ${Math.round(p.r * 2.6)}px "Arial Black", sans-serif`);
           ctx.setTextAlign("center");
           ctx.setTextBaseline("middle");
@@ -1141,12 +1142,12 @@ export class Game {
       ctx.fill();
       ctx.stroke();
       this.drawFace(ctx, f, cx - 26, cy - 24, 52, 46);
-      const a = Math.atan2(sy - cy, sx - cx);
+      const a = datan2(sy - cy, sx - cx);
       ctx.setFillStyle(f.c.main);
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * 42, cy + Math.sin(a) * 42);
-      ctx.lineTo(cx + Math.cos(a + 0.5) * 30, cy + Math.sin(a + 0.5) * 30);
-      ctx.lineTo(cx + Math.cos(a - 0.5) * 30, cy + Math.sin(a - 0.5) * 30);
+      ctx.moveTo(cx + dcos(a) * 42, cy + dsin(a) * 42);
+      ctx.lineTo(cx + dcos(a + 0.5) * 30, cy + dsin(a + 0.5) * 30);
+      ctx.lineTo(cx + dcos(a - 0.5) * 30, cy + dsin(a - 0.5) * 30);
       ctx.fill();
     }
   }

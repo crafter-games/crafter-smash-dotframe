@@ -3,6 +3,7 @@ import type { Fighter } from "./fighter";
 import type { Game } from "./game";
 import { type Controller, emptyInput, type RawInput } from "./input";
 import { random, randi, sgn } from "./util";
+import { dhypot } from "../../vendor/dotframe/src/detmath";
 
 interface InputPatch {
   x?: number;
@@ -270,7 +271,7 @@ export function createCPUController(initialLevel: number): Controller & { setLev
           const ty = L.y - 20;
           const vx = tx - me.x;
           const vy = me.y - ty;
-          const mm = Math.hypot(vx, vy) || 1;
+          const mm = dhypot(vx, vy) || 1;
           out.x = vx / mm;
           out.y = vy / mm;
         } else apply(out, s.input);

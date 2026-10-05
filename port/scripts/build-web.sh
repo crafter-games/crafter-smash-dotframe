@@ -10,7 +10,10 @@ mkdir -p "$out/assets" "$out/port" "$out/dotframe/assets"
 bun build "$port_dir/match/main.web.ts" --outfile "$out/main.js" --target browser --minify
 # Content-hashed bundle name: Discord's proxy and browsers cache main.js, and a new name per build means a new
 # version is never served from a stale cache.
-hash=$(shasum -a 256 "$out/main.js" | cut -c1-10)
+# shasum is missing on Debian images (Docker); sha256sum is missing on macOS. An empty hash would silently disable
+# cache-busting for Discord.
+if command -v shasum >/dev/null 2>&1; then hash=$(shasum -a 256 "$out/main.js" | cut -c1-10); else hash=$(sha256sum "$out/main.js" | cut -c1-10); fi
+[ -n "$hash" ] || { echo "could not hash main.js" >&2; exit 1; }
 mv "$out/main.js" "$out/main.$hash.js"
 sed "s#./main.js#./main.$hash.js#" "$port_dir/match/index.html" > "$out/index.html"
 # The page itself is never cached, so it always points at the current bundle.

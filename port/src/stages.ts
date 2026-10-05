@@ -11,6 +11,7 @@ import {
   type Raster2D,
 } from "../../vendor/dotframe/src/raster2d";
 import { clamp, seeded, shade, TAU } from "./util";
+import { dcos, dsin } from "../../vendor/dotframe/src/detmath";
 
 export const PX = 2; // stage pixel scale
 const OUT = "#1a1020";
@@ -374,8 +375,8 @@ function bakeFinal(platforms: PlatformSpec[]): Baked {
     for (let i = 0; i < 900; i++) {
       const a = r() * TAU;
       const d = Math.sqrt(r()) * rad;
-      const x = Math.round(cx + Math.cos(a) * d);
-      const y = Math.round(cy + Math.sin(a) * d * 0.6);
+      const x = Math.round(cx + dcos(a) * d);
+      const y = Math.round(cy + dsin(a) * d * 0.6);
       b.setFillStyle(cols[Math.floor((d / rad) * cols.length)]);
       b.fillRect(x, y, 2, 2);
     }
@@ -471,7 +472,7 @@ function bakeLima(platforms: PlatformSpec[]): Baked {
   }
   b.setFillStyle("#6b3d5a");
   for (let x = 0; x < 130; x += 2) {
-    const h = 30 + Math.floor(Math.sin(x * 0.08) * 6) + Math.floor(r() * 3);
+    const h = 30 + Math.floor(dsin(x * 0.08) * 6) + Math.floor(r() * 3);
     b.fillRect(x, 165 - h, 2, 75 + h);
   }
   b.setFillStyle("#4f2c44");
@@ -600,8 +601,8 @@ export function updateStage(stage: Stage, frame: number): void {
     const move = p.move;
     if (!move) continue;
     const ph = (frame / move.period) * TAU;
-    const nx1 = p.bx1 + Math.sin(ph) * move.ax;
-    const ny = p.by + Math.sin(ph * 2) * move.ay;
+    const nx1 = p.bx1 + dsin(ph) * move.ax;
+    const ny = p.by + dsin(ph * 2) * move.ay;
     p.dx = nx1 - p.x1;
     p.dy = ny - p.y;
     p.x2 += p.dx;
@@ -652,7 +653,7 @@ export function drawStageBackground(stage: Stage, ctx: Draw2D, W: number, H: num
     drawLayer(ctx, art.mid, W, H, cam, 0.12, 0.62);
   } else if (stage.id === "final") {
     drawLayer(ctx, art.bg, W, H, cam, 0.03, 0.5);
-    ctx.setGlobalAlpha(0.5 + 0.5 * Math.sin(t * 0.05));
+    ctx.setGlobalAlpha(0.5 + 0.5 * dsin(t * 0.05));
     drawLayer(ctx, art.mid, W, H, cam, 0.08, 0.5);
     ctx.setGlobalAlpha(1);
   } else {
@@ -661,7 +662,7 @@ export function drawStageBackground(stage: Stage, ctx: Draw2D, W: number, H: num
     const colors = ["#e8323f", "#2f8fe8", "#ffd23f"];
     for (let i = 0; i < 3; i++) {
       const px = ((t * (0.25 + i * 0.1) + i * 700) % (W + 400)) - 200;
-      const py = H * (0.16 + i * 0.09) + Math.round(Math.sin(t * 0.02 + i) * 3) * sc;
+      const py = H * (0.16 + i * 0.09) + Math.round(dsin(t * 0.02 + i) * 3) * sc;
       ctx.setFillStyle(colors[i]);
       ctx.fillRect(px - 8 * sc, py, 16 * sc, 2 * sc);
       ctx.fillRect(px - 6 * sc, py - sc, 12 * sc, sc);

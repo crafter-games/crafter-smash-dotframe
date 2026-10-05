@@ -6,6 +6,7 @@ import { drawItem } from "./items";
 import { play, sfx } from "./sound";
 import { H } from "./types";
 import { rand, random, sgn, TAU } from "./util";
+import { dsin } from "../../vendor/dotframe/src/detmath";
 
 export const pick = (values: string[]): string => values[Math.floor(random() * values.length)];
 
@@ -96,7 +97,7 @@ export function summonPokemon(owner: Fighter, x: number, y: number, g: Game, fac
       if (P.img === "bulbasaur" && t === 24) {
         sfx.hit(0.8, "");
         gg.zone(owner, p.x + facing * 60, p.y - 30, 70, { d: 9, a: 50, b: 45, k: 75, dir: facing }, 3);
-        for (let i = 0; i < 12; i++) gg.fx.p({ x: p.x + facing * i * 10, y: p.y - 30 - Math.sin(i / 2) * 20, vx: 0, vy: 0, life: 12, size: 5, color: "#4caf50", kind: "dot" });
+        for (let i = 0; i < 12; i++) gg.fx.p({ x: p.x + facing * i * 10, y: p.y - 30 - dsin(i / 2) * 20, vx: 0, vy: 0, life: 12, size: 5, color: "#4caf50", kind: "dot" });
       }
       if (t > 60) p.alpha = (70 - t) / 10;
     },

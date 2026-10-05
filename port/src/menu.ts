@@ -14,6 +14,7 @@ import { faces } from "./sprites";
 import { STAGES } from "./stages";
 import type { TouchControls } from "./touch";
 import { clamp, seedRandom, shade } from "./util";
+import { dsin } from "../../vendor/dotframe/src/detmath";
 
 export interface MenuOptions {
   game: Game;
@@ -696,13 +697,13 @@ export function createMenu(options: MenuOptions): Menu {
     const x0 = W / 2 - (n * size + (n - 1) * 16) / 2;
     for (let i = 0; i < n; i++) {
       const c = getCharacter(CHAR_IDS[i]).colors;
-      const bob = Math.sin(t / 20 + i * 1.3) * 8;
+      const bob = dsin(t / 20 + i * 1.3) * 8;
       const x = x0 + i * (size + 16);
       const y = 210 + bob;
       panel(ctx, x, y, size, size, shade(c.main, -40), c.main);
       face(ctx, CHAR_IDS[i], "base", x + 4, y + 4, size - 8, size - 8, 1);
     }
-    const pulse = 1 + Math.sin(t / 15) * 0.03;
+    const pulse = 1 + dsin(t / 15) * 0.03;
     ctx.save();
     ctx.translate(W / 2, 110);
     ctx.scale(pulse, pulse);

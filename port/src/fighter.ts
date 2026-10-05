@@ -10,6 +10,7 @@ import { drawFighterBody, spriteFrame } from "./sprites";
 import type { Ledge, Platform } from "./stages";
 import { type Character, type Colors, H, type Hitbox, type Move, type Stats, type Throw } from "./types";
 import { approach, clamp, DEG, easeOut, lerp, rand, sgn, SZ, TAU } from "./util";
+import { dcos, dhypot, dsin } from "../../vendor/dotframe/src/detmath";
 
 const BUFFER = 6; // input buffer frames
 export const KB_SCALE = 0.13; // knockback to px/frame
@@ -688,11 +689,11 @@ export class Fighter {
     this.setState("airdodge");
     let dx = this.inp.x;
     let dy = this.inp.y;
-    if (Math.hypot(dx, dy) < 0.3) {
+    if (dhypot(dx, dy) < 0.3) {
       dx = dir.x;
       dy = dir.y;
     }
-    const m = Math.hypot(dx, dy);
+    const m = dhypot(dx, dy);
     if (m > 0.3) {
       this.mv.dir = 1;
       this.vx = (dx / m) * this.stats.airdodge;
@@ -1316,7 +1317,7 @@ export class Fighter {
   }
 
   decayKB(): void {
-    const s = Math.hypot(this.kvx, this.kvy);
+    const s = dhypot(this.kvx, this.kvy);
     if (s > 0) {
       const ns = Math.max(0, s - KB_DECAY);
       this.kvx *= ns / s;
@@ -1596,15 +1597,15 @@ export class Fighter {
     const sx = this.inp.x;
     const sy = this.inp.y;
     if (kb.speed > 3 && (sx || sy)) {
-      const m = Math.hypot(sx, sy) || 1;
-      const px = -Math.sin(a);
-      const py = Math.cos(a);
+      const m = dhypot(sx, sy) || 1;
+      const px = -dsin(a);
+      const py = dcos(a);
       const dot = (sx / m) * px + (sy / m) * py;
       a += dot * 18 * DEG;
       if (Math.abs(dot) > 0.5 && kb.speed > 10) this.game.callout(this, "DI", "#ccc", true);
     }
-    this.kvx = Math.cos(a) * kb.speed;
-    this.kvy = -Math.sin(a) * kb.speed;
+    this.kvx = dcos(a) * kb.speed;
+    this.kvy = -dsin(a) * kb.speed;
     this.vx = 0;
     this.vy = 0;
     if (this.ground) {
@@ -1629,22 +1630,22 @@ export class Fighter {
     const sf = this.sf;
     const cycle = (spd: number, amp: number, lean: number): Pose => {
       const ph = t * spd;
-      const k1 = Math.sin(ph);
-      const k2 = Math.sin(ph + Math.PI);
+      const k1 = dsin(ph);
+      const k2 = dsin(ph + Math.PI);
       return mergePose(BASE_POSE, {
         lean,
-        legF: [k1 * amp, -Math.max(0, Math.cos(ph)) * amp * 1.4 - 10],
-        legB: [k2 * amp, -Math.max(0, -Math.cos(ph)) * amp * 1.4 - 10],
+        legF: [k1 * amp, -Math.max(0, dcos(ph)) * amp * 1.4 - 10],
+        legB: [k2 * amp, -Math.max(0, -dcos(ph)) * amp * 1.4 - 10],
         armF: [-k1 * amp * 0.9 + 10, 60],
         armB: [-k2 * amp * 0.9 + 10, 60],
-        yOff: -Math.abs(Math.cos(ph)) * 3,
+        yOff: -Math.abs(dcos(ph)) * 3,
       });
     };
     let p: Pose;
     switch (s) {
       case "idle":
       case "respawn":
-        p = mergePose(BASE_POSE, { lean: 4 + Math.sin(t * 0.07) * 2, crouch: 1 + Math.sin(t * 0.07) * 1.5, armF: [22 + Math.sin(t * 0.07) * 4, 40] });
+        p = mergePose(BASE_POSE, { lean: 4 + dsin(t * 0.07) * 2, crouch: 1 + dsin(t * 0.07) * 1.5, armF: [22 + dsin(t * 0.07) * 4, 40] });
         break;
       case "walk":
         p = cycle(0.2, 28, 6);
@@ -1686,7 +1687,7 @@ export class Fighter {
       case "tumble":
       case "grabbed":
       case "locked":
-        p = mergePose(BASE_POSE, { lean: -25, armF: [150 + Math.sin(t * 0.5) * 20, 20], armB: [-150, 20], legF: [40, -30], legB: [-20, -20], headTilt: 20 });
+        p = mergePose(BASE_POSE, { lean: -25, armF: [150 + dsin(t * 0.5) * 20, 20], armB: [-150, 20], legF: [40, -30], legB: [-20, -20], headTilt: 20 });
         if (s === "tumble" || (s === "hitstun" && this.tumble && !this.ground)) p.rot = -t * 18;
         break;
       case "shield":
@@ -1748,7 +1749,7 @@ export class Fighter {
         break;
       }
       case "dizzy":
-        p = mergePose(BASE_POSE, { lean: Math.sin(t * 0.1) * 18, armF: [30, 60], armB: [-30, 60], headTilt: Math.sin(t * 0.1) * 20 });
+        p = mergePose(BASE_POSE, { lean: dsin(t * 0.1) * 18, armF: [30, 60], armB: [-30, 60], headTilt: dsin(t * 0.1) * 20 });
         break;
       case "attack":
         p = this.movePose();
@@ -1778,7 +1779,7 @@ export class Fighter {
     if (sf < m.as) p = lerpPose(base, wind, easeOut(clamp(sf / m.as, 0, 1)));
     else if (sf <= m.ae) p = lerpPose(wind, hit, clamp((sf - m.as + 1) / 2, 0, 1));
     else p = lerpPose(hit, base, clamp((sf - m.ae) / Math.max(1, m.frames - m.ae), 0, 1));
-    if (this.chargeT > 0 && sf === m.charge) p.lean += Math.sin(this.game.frame * 1.3) * 2;
+    if (this.chargeT > 0 && sf === m.charge) p.lean += dsin(this.game.frame * 1.3) * 2;
     const anim = m.anim;
     if (anim) {
       const o = anim(this, sf);
@@ -1818,7 +1819,7 @@ export class Fighter {
     }
     // Super aura. Canvas2D used a radial gradient; concentric translucent rings approximate it.
     if (this.meter >= 100) {
-      const r = 70 + Math.sin(g.frame * 0.2) * 6;
+      const r = 70 + dsin(g.frame * 0.2) * 6;
       ctx.setFillStyle(`${this.c.glow}22`);
       for (let k = 0; k < 3; k++) {
         ctx.beginPath();
@@ -1844,7 +1845,7 @@ export class Fighter {
       if (this.charId === "anthony" && move.id === "fsmash") {
         const sf = this.sf;
         let ang: number;
-        if (sf < move.as) ang = lerp(-0.4, -2.3, clamp(sf / move.as, 0, 1)) + (this.chargeT > 0 ? Math.sin(g.frame) * 0.05 : 0);
+        if (sf < move.as) ang = lerp(-0.4, -2.3, clamp(sf / move.as, 0, 1)) + (this.chargeT > 0 ? dsin(g.frame) * 0.05 : 0);
         else if (sf <= move.ae) ang = lerp(-2.3, 1.75, clamp((sf - move.as + 1) / 3, 0, 1));
         else ang = lerp(1.75, 1.2, clamp((sf - move.ae) / 12, 0, 1));
         ctx.save();
@@ -1858,7 +1859,7 @@ export class Fighter {
       ctx.setStrokeStyle("rgba(255,255,255,.8)");
       ctx.setLineWidth(3);
       ctx.beginPath();
-      ctx.arc(x, y - 60 * SZ, 66 + Math.sin(g.frame * 0.6) * 4, 0, TAU, false);
+      ctx.arc(x, y - 60 * SZ, 66 + dsin(g.frame * 0.6) * 4, 0, TAU, false);
       ctx.stroke();
     }
     if (this.state === "shield" || this.state === "shieldstun") {
@@ -1880,7 +1881,7 @@ export class Fighter {
       // Canvas2D drew a star emoji; the SDF fonts have no emoji, so draw a five-point star.
       for (let i = 0; i < 3; i++) {
         const a = g.frame * 0.12 + (i * TAU) / 3;
-        drawStar(ctx, x + Math.cos(a) * 40, y - 150 * SZ + Math.sin(a) * 8 - 6, 8, "#ffd23f");
+        drawStar(ctx, x + dcos(a) * 40, y - 150 * SZ + dsin(a) * 8 - 6, 8, "#ffd23f");
       }
     }
     // Player indicator.
@@ -1910,8 +1911,8 @@ function drawStar(ctx: Draw2D, x: number, y: number, r: number, color: string): 
   for (let i = 0; i < 10; i++) {
     const radius = i % 2 === 0 ? r : r * 0.45;
     const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    if (i === 0) ctx.moveTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius);
-    else ctx.lineTo(x + Math.cos(a) * radius, y + Math.sin(a) * radius);
+    if (i === 0) ctx.moveTo(x + dcos(a) * radius, y + dsin(a) * radius);
+    else ctx.lineTo(x + dcos(a) * radius, y + dsin(a) * radius);
   }
   ctx.closePath();
   ctx.fill();
@@ -1927,8 +1928,8 @@ function drawShine(ctx: Draw2D, x: number, y: number, t: number): void {
   ctx.beginPath();
   for (let i = 0; i <= 6; i++) {
     const a = (i * TAU) / 6;
-    if (i === 0) ctx.moveTo(Math.cos(a) * 48, Math.sin(a) * 48);
-    else ctx.lineTo(Math.cos(a) * 48, Math.sin(a) * 48);
+    if (i === 0) ctx.moveTo(dcos(a) * 48, dsin(a) * 48);
+    else ctx.lineTo(dcos(a) * 48, dsin(a) * 48);
   }
   ctx.fill();
   ctx.stroke();

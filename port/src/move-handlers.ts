@@ -8,6 +8,7 @@ import { play, say, sfx, voice } from "./sound";
 import { pick, spawnMiku, summonPokemon, SWEARS, throwKirby } from "./summons";
 import { H } from "./types";
 import { approach, circleRect, DEG, lerp, rand, random, sgn, SZ } from "./util";
+import { datan2, dcos, dhypot, dsin } from "../../vendor/dotframe/src/detmath";
 
 // ---------- Railly ----------
 
@@ -112,11 +113,11 @@ export const railly_uspecial_update = (f: Fighter, sf: number, g: Game): void =>
   if (sf === 43) {
     let dx = f.inp.x;
     let dy = f.inp.y;
-    if (Math.hypot(dx, dy) < 0.3) {
+    if (dhypot(dx, dy) < 0.3) {
       dx = 0;
       dy = 1;
     }
-    const m = Math.hypot(dx, dy);
+    const m = dhypot(dx, dy);
     mv.dx = dx / m;
     mv.dy = dy / m;
     if (mv.dx) f.facing = sgn(mv.dx);
@@ -128,7 +129,7 @@ export const railly_uspecial_update = (f: Fighter, sf: number, g: Game): void =>
     f.vx = mv.dx * 17;
     f.vy = -mv.dy * 17;
     if (f.ground && mv.dy < 0) f.vy = 0;
-    const ang = Math.atan2(mv.dy, mv.dx * f.facing) / DEG;
+    const ang = datan2(mv.dy, mv.dx * f.facing) / DEG;
     f.poseRot = 90 - ang;
     f.dynHB.push(H(sf, sf, 0, 55, 34, 14, 58, 40, 92, { g: 5, fx: "fire" }));
     g.fx.fire(f.x, f.y - 55, 2);
@@ -176,7 +177,7 @@ export const railly_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null 
     return { crouch: 8, lean: 6, armF: tap ? [70, 95] : [55, 105], armB: tap ? [55, 100] : [70, 90], headTilt: 8 };
   }
   if (sf < 70) {
-    const pulse = Math.sin((sf - 28) * 0.25) * 4;
+    const pulse = dsin((sf - 28) * 0.25) * 4;
     return { armF: [155, -5 + pulse], armB: [-25, 45], lean: 10 + pulse * 0.3, headTilt: -14, prop: "gun" };
   }
   return null;
@@ -187,7 +188,7 @@ export const railly_taunt_drawOver = (ctx: Draw2D, f: Fighter, _g: Game): void =
   const a = f.sf > 64 ? (72 - f.sf) / 8 : 1;
   ctx.save();
   ctx.setGlobalAlpha(a);
-  drawVercel(ctx, f.x + f.facing * 58, f.y - 118 + Math.sin(f.sf * 0.3) * 4, 16, 0, true);
+  drawVercel(ctx, f.x + f.facing * 58, f.y - 118 + dsin(f.sf * 0.3) * 4, 16, 0, true);
   ctx.restore();
 };
 
@@ -398,13 +399,13 @@ export const anthony_taunt_update = (f: Fighter, sf: number, g: Game): void => {
 export const anthony_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null => {
   if (sf < 12) return { crouch: 6 - sf * 0.3, armF: [40 + sf * 8, 100 - sf * 7] };
   if (sf <= 78) {
-    const sway = Math.sin(sf * 0.18) * 14;
-    const bob = Math.abs(Math.sin(sf * 0.22)) * 6;
+    const sway = dsin(sf * 0.18) * 14;
+    const bob = Math.abs(dsin(sf * 0.22)) * 6;
     return {
       crouch: bob,
       lean: sway * 0.35,
-      armF: [155 + Math.sin(sf * 0.2) * 6, -5 - bob],
-      armB: [145 + Math.cos(sf * 0.2) * 6, 0 - bob * 0.5],
+      armF: [155 + dsin(sf * 0.2) * 6, -5 - bob],
+      armB: [145 + dcos(sf * 0.2) * 6, 0 - bob * 0.5],
       headTilt: -8 + sway * 0.2,
       prop: "peace",
     };
@@ -552,7 +553,7 @@ export const jibaru_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null 
   if (sf < 12) return { crouch: 6, armF: [60 + sf * 6, 90 - sf * 4], armB: [50 + sf * 5, 85] };
   if (sf <= 74) {
     // Conducting the concert.
-    const beat = Math.sin(sf * 0.45);
+    const beat = dsin(sf * 0.45);
     return {
       crouch: Math.abs(beat) * 4,
       lean: beat * 8,
@@ -791,7 +792,7 @@ export const edward_taunt_update = (f: Fighter, sf: number, g: Game): void => {
 export const edward_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null => {
   if (sf < 16) {
     // Shrug.
-    return { crouch: 10, lean: -6, armF: [50 + sf * 2, 60], armB: [-50 - sf * 2, 60], headTilt: 8 + Math.sin(sf * 0.5) * 6 };
+    return { crouch: 10, lean: -6, armF: [50 + sf * 2, 60], armB: [-50 - sf * 2, 60], headTilt: 8 + dsin(sf * 0.5) * 6 };
   }
   if (sf < 28) {
     const t = (sf - 16) / 12;
@@ -804,7 +805,7 @@ export const edward_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null 
     };
   }
   if (sf <= 74) {
-    const bob = Math.sin(sf * 0.28) * 8;
+    const bob = dsin(sf * 0.28) * 8;
     return { crouch: 2 + Math.abs(bob) * 0.3, armF: [135, 10 + bob * 0.4], armB: [-135, 10 - bob * 0.4], headTilt: -4 + bob * 0.3, lean: bob * 0.2 };
   }
   return null;
@@ -813,9 +814,9 @@ export const edward_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null 
 export const edward_taunt_drawOver = (ctx: Draw2D, f: Fighter, _g: Game): void => {
   if (f.sf < 16 || f.sf > 78) return;
   const t = f.sf - 16;
-  const bob = Math.sin(t * 0.3) * 8;
+  const bob = dsin(t * 0.3) * 8;
   const a = f.sf > 70 ? (78 - f.sf) / 8 : Math.min(1, t / 6);
-  drawItem(ctx, f.mv.cat === "" ? "cat_bub" : f.mv.cat, f.x + f.facing * 52, f.y - 108 + bob, 40, { alpha: a, rot: Math.sin(t * 0.15) * 0.12 });
+  drawItem(ctx, f.mv.cat === "" ? "cat_bub" : f.mv.cat, f.x + f.facing * 52, f.y - 108 + bob, 40, { alpha: a, rot: dsin(t * 0.15) * 0.12 });
 };
 
 // ---------- Shiara ----------
@@ -879,11 +880,11 @@ export const shiara_uspecial_update = (f: Fighter, sf: number, g: Game): void =>
   if (sf === 6) {
     let dx = f.inp.x;
     let dy = f.inp.y;
-    if (Math.hypot(dx, dy) < 0.3) {
+    if (dhypot(dx, dy) < 0.3) {
       dx = 0;
       dy = 1;
     }
-    const m = Math.hypot(dx, dy);
+    const m = dhypot(dx, dy);
     mv.dx = dx / m;
     mv.dy = Math.max(0.2, dy / m);
     if (mv.dx) f.facing = sgn(mv.dx);
@@ -1038,8 +1039,8 @@ export const shiara_taunt_update = (f: Fighter, sf: number, g: Game): void => {
 export const shiara_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null => {
   if (sf < 8) return null;
   if (sf <= 78) {
-    const bob = Math.abs(Math.sin((sf - 8) * 0.38)) * 12;
-    return { crouch: 2 + bob, lean: Math.sin(sf * 0.48) * 10, armF: [158, -8 - bob * 1.5], armB: [148, -4 - bob], headTilt: -12 - bob * 0.4 };
+    const bob = Math.abs(dsin((sf - 8) * 0.38)) * 12;
+    return { crouch: 2 + bob, lean: dsin(sf * 0.48) * 10, armF: [158, -8 - bob * 1.5], armB: [148, -4 - bob], headTilt: -12 - bob * 0.4 };
   }
   return null;
 };
@@ -1047,11 +1048,11 @@ export const shiara_taunt_anim = (_f: Fighter, sf: number): PoseOverride | null 
 export const shiara_taunt_drawOver = (ctx: Draw2D, f: Fighter, _g: Game): void => {
   if (f.sf < 5 || f.sf > 86) return;
   const t = f.sf - 5;
-  const bob = Math.sin(t * 0.35) * 10;
-  const spin = Math.sin(t * 0.2) * 0.15;
+  const bob = dsin(t * 0.35) * 10;
+  const spin = dsin(t * 0.2) * 0.15;
   const alpha = f.sf > 78 ? (86 - f.sf) / 8 : Math.min(1, t / 5);
-  const h = 46 + Math.sin(t * 0.4) * 5;
+  const h = 46 + dsin(t * 0.4) * 5;
   drawItem(ctx, "kirby_happy", f.x + f.facing * 42, f.y - 100 + bob, h, { flip: f.facing < 0, alpha, rot: spin });
-  drawItem(ctx, "kirby_star", f.x - f.facing * 48, f.y - 128 + bob * 0.6, 24 + Math.sin(t * 0.5) * 3, { alpha: alpha * 0.95, rot: t * 0.12 });
+  drawItem(ctx, "kirby_star", f.x - f.facing * 48, f.y - 128 + bob * 0.6, 24 + dsin(t * 0.5) * 3, { alpha: alpha * 0.95, rot: t * 0.12 });
   if (t > 20 && t % 14 < 7) drawItem(ctx, "kirby_star", f.x + f.facing * 70, f.y - 70 - bob, 16, { alpha: alpha * 0.7, rot: -t * 0.15 });
 };
